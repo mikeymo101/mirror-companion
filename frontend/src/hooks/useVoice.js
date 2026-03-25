@@ -8,6 +8,10 @@ const VOICE_STATES = {
   TALKING: 'talking',
 };
 
+// Check if browser supports Web Speech API
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const hasSpeechRecognition = !!SpeechRecognition;
+
 export default function useVoice() {
   const [currentState, setCurrentState] = useState(VOICE_STATES.IDLE);
   const [transcript, setTranscript] = useState('');
@@ -16,14 +20,15 @@ export default function useVoice() {
   const [isConnected, setIsConnected] = useState(false);
 
   const wsRef = useRef(null);
+  const recognitionRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const spaceHeldRef = useRef(false);
+  const interimTranscriptRef = useRef('');
 
   const connectWebSocket = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const hostname = window.location.hostname;
-    // Connect directly to backend port 8000 for WebSocket (avoids Vite proxy issues)
     const wsUrl = `${protocol}//${hostname}:8000/api/voice/ws`;
 
     try {
@@ -36,8 +41,9 @@ export default function useVoice() {
       };
 
       ws.onmessage = (event) => {
-        // Binary message = audio bytes from TTS
+        // Binary message = TTS audio
         if (event.data instanceof Blob) {
+          setCurrentState(VOICE_STATES.TALKING);
           const url = URL.createObjectURL(event.data);
           const audio = new Audio(url);
           audio.onended = () => {
@@ -51,40 +57,22 @@ export default function useVoice() {
           return;
         }
 
-        // Text message = JSON
+        // JSON message
         try {
           const data = JSON.parse(event.data);
-
           switch (data.type) {
-            case 'wake_word':
-              setCurrentState(VOICE_STATES.WAKE_WORD_DETECTED);
-              setTimeout(() => setCurrentState(VOICE_STATES.LISTENING), 500);
-              break;
-
-            case 'transcript':
-              setTranscript(data.text);
-              setCurrentState(VOICE_STATES.PROCESSING);
-              break;
-
             case 'response':
               setTranscript(data.transcription || '');
-              setResponse(data.response_text || data.text || '');
-              setCurrentState(VOICE_STATES.TALKING);
+              setResponse(data.response_text || '');
+              // Don't set TALKING yet — wait for audio blob
               break;
-
             case 'silence':
               setCurrentState(VOICE_STATES.IDLE);
               break;
-
-            case 'done':
-              setCurrentState(VOICE_STATES.IDLE);
-              break;
-
             case 'error':
               setError(data.message);
               setCurrentState(VOICE_STATES.IDLE);
               break;
-
             default:
               break;
           }
@@ -96,7 +84,6 @@ export default function useVoice() {
       ws.onclose = () => {
         setIsConnected(false);
         console.log('[useVoice] WebSocket disconnected');
-        // Reconnect after 3 seconds
         setTimeout(connectWebSocket, 3000);
       };
 
@@ -113,39 +100,94 @@ export default function useVoice() {
     }
   }, []);
 
-  const playAudio = useCallback((base64Audio) => {
-    try {
-      const audioBytes = atob(base64Audio);
-      const arrayBuffer = new ArrayBuffer(audioBytes.length);
-      const view = new Uint8Array(arrayBuffer);
-      for (let i = 0; i < audioBytes.length; i++) {
-        view[i] = audioBytes.charCodeAt(i);
-      }
-      const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+  // Send text directly (skips Whisper — much faster)
+  const sendText = useCallback((text) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && text.trim()) {
+      setTranscript(text);
+      setCurrentState(VOICE_STATES.PROCESSING);
+      wsRef.current.send(JSON.stringify({
+        type: 'text',
+        text: text.trim(),
+      }));
+    } else {
+      setError('Not connected to server');
+      setCurrentState(VOICE_STATES.IDLE);
+    }
+  }, []);
 
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        setCurrentState(VOICE_STATES.IDLE);
+  // Send audio as fallback (when SpeechRecognition unavailable)
+  const sendAudio = useCallback((audioBlob) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      setCurrentState(VOICE_STATES.PROCESSING);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        wsRef.current.send(JSON.stringify({
+          type: 'audio',
+          audio: base64,
+        }));
       };
-
-      audio.play().catch((err) => {
-        console.error('[useVoice] Audio playback failed:', err);
-        setCurrentState(VOICE_STATES.IDLE);
-      });
-    } catch (err) {
-      console.error('[useVoice] Failed to play audio:', err);
+      reader.readAsDataURL(audioBlob);
+    } else {
+      setError('Not connected to server');
       setCurrentState(VOICE_STATES.IDLE);
     }
   }, []);
 
   const startListening = useCallback(async () => {
-    try {
-      setError(null);
-      setCurrentState(VOICE_STATES.LISTENING);
-      audioChunksRef.current = [];
+    setError(null);
+    setCurrentState(VOICE_STATES.LISTENING);
+    interimTranscriptRef.current = '';
 
+    // Prefer Web Speech API (instant, free, no API call)
+    if (hasSpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+          let interim = '';
+          let final = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              final += result[0].transcript;
+            } else {
+              interim += result[0].transcript;
+            }
+          }
+          if (final) {
+            interimTranscriptRef.current += final;
+          }
+          // Show live transcript
+          setTranscript(interimTranscriptRef.current + interim);
+        };
+
+        recognition.onerror = (event) => {
+          console.error('[useVoice] Speech recognition error:', event.error);
+          if (event.error !== 'aborted') {
+            setError(`Speech recognition: ${event.error}`);
+            setCurrentState(VOICE_STATES.IDLE);
+          }
+        };
+
+        recognition.start();
+        recognitionRef.current = recognition;
+      } catch (err) {
+        console.error('[useVoice] SpeechRecognition failed, falling back to audio:', err);
+        startAudioRecording();
+      }
+    } else {
+      // Fallback to audio recording
+      startAudioRecording();
+    }
+  }, []);
+
+  const startAudioRecording = useCallback(async () => {
+    try {
+      audioChunksRef.current = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -165,41 +207,37 @@ export default function useVoice() {
         stream.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorder.start(100); // collect data in 100ms chunks
+      mediaRecorder.start(100);
       mediaRecorderRef.current = mediaRecorder;
     } catch (err) {
-      console.error('[useVoice] Failed to start recording:', err);
+      console.error('[useVoice] Microphone access denied:', err);
       setError('Microphone access denied');
       setCurrentState(VOICE_STATES.IDLE);
     }
-  }, []);
+  }, [sendAudio]);
 
   const stopListening = useCallback(() => {
+    // Stop Speech Recognition and send the text
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      const finalText = interimTranscriptRef.current;
+      if (finalText.trim()) {
+        sendText(finalText);
+      } else {
+        setCurrentState(VOICE_STATES.IDLE);
+      }
+      return;
+    }
+
+    // Stop audio recording (fallback)
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
-      setCurrentState(VOICE_STATES.PROCESSING);
     }
-  }, []);
+  }, [sendText]);
 
-  const sendAudio = useCallback((audioBlob) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1];
-        wsRef.current.send(JSON.stringify({
-          type: 'audio',
-          audio: base64,
-        }));
-      };
-      reader.readAsDataURL(audioBlob);
-    } else {
-      setError('Not connected to server');
-      setCurrentState(VOICE_STATES.IDLE);
-    }
-  }, []);
-
-  // Spacebar push-to-talk for testing
+  // Spacebar push-to-talk
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !e.repeat && !spaceHeldRef.current) {
@@ -229,7 +267,6 @@ export default function useVoice() {
   // Connect WebSocket on mount
   useEffect(() => {
     connectWebSocket();
-
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -237,7 +274,7 @@ export default function useVoice() {
     };
   }, [connectWebSocket]);
 
-  // Simulate state cycle for demo when backend is not connected
+  // Demo mode
   const simulateInteraction = useCallback(() => {
     if (!isConnected) {
       setCurrentState(VOICE_STATES.WAKE_WORD_DETECTED);

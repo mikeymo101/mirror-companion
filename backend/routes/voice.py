@@ -180,7 +180,12 @@ async def get_audio(filename: str):
 
 @router.websocket("/ws")
 async def voice_websocket(websocket: WebSocket):
-    """WebSocket for real-time voice interaction with skill support."""
+    """WebSocket for real-time voice interaction with skill support.
+
+    Accepts two message types:
+    - {"type": "text", "text": "..."} — pre-transcribed text from browser SpeechRecognition (fast path)
+    - {"type": "audio", "audio": "base64..."} — raw audio for Whisper transcription (fallback)
+    """
     await websocket.accept()
     logger.info("WebSocket connected.")
 
@@ -188,45 +193,57 @@ async def voice_websocket(websocket: WebSocket):
         while True:
             message = await websocket.receive()
 
-            # Handle disconnect
             if message.get("type") == "websocket.disconnect":
                 break
 
-            # Parse audio data
+            # Parse incoming message
+            transcription = None
+            temp_path = None
+
             if "text" in message:
                 try:
                     payload = json.loads(message["text"])
-                    if payload.get("type") != "audio" or not payload.get("audio"):
+
+                    if payload.get("type") == "text" and payload.get("text"):
+                        # Fast path: browser already transcribed the speech
+                        transcription = payload["text"].strip()
+                        logger.info(f"Received text (browser STT): '{transcription}'")
+
+                    elif payload.get("type") == "audio" and payload.get("audio"):
+                        # Fallback: decode audio and transcribe with Whisper
+                        audio_data = base64.b64decode(payload["audio"])
+                        temp_path = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}.webm")
+                        with open(temp_path, "wb") as f:
+                            f.write(audio_data)
+                        logger.info(f"Received {len(audio_data)} bytes of audio, transcribing...")
+                        transcription = await openai_service.transcribe(temp_path)
+                        logger.info(f"Whisper transcription: '{transcription}'")
+                    else:
                         continue
-                    audio_data = base64.b64decode(payload["audio"])
-                except (json.JSONDecodeError, Exception):
+
+                except (json.JSONDecodeError, Exception) as e:
+                    logger.error(f"Failed to parse message: {e}")
                     continue
             elif "bytes" in message:
                 audio_data = message["bytes"]
+                temp_path = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}.webm")
+                with open(temp_path, "wb") as f:
+                    f.write(audio_data)
+                transcription = await openai_service.transcribe(temp_path)
             else:
                 continue
 
-            # Process voice pipeline
-            temp_path = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}.webm")
+            # Process the transcription
             try:
-                with open(temp_path, "wb") as f:
-                    f.write(audio_data)
-
-                logger.info(f"Received {len(audio_data)} bytes of audio")
-
-                # Transcribe
-                transcription = await openai_service.transcribe(temp_path)
-                logger.info(f"Transcription: '{transcription}'")
-
                 if not transcription or not transcription.strip():
                     await websocket.send_json({"type": "silence", "message": "No speech detected"})
                     continue
 
-                # Get context
+                # Get context and generate response
                 character, character_context, conversation_history = await get_ai_context()
                 tools = skill_registry.get_all_tool_definitions()
 
-                # Generate response (with skill support)
+                logger.info("Generating AI response...")
                 response_text = await openai_service.generate_response(
                     user_text=transcription,
                     conversation_history=conversation_history,
@@ -234,15 +251,18 @@ async def voice_websocket(websocket: WebSocket):
                     tools=tools if tools else None,
                     skill_executor=execute_skill,
                 )
+                logger.info(f"AI response: '{response_text}'")
 
                 # Generate TTS
+                logger.info("Generating TTS...")
                 audio_bytes = await openai_service.text_to_speech(response_text)
+                logger.info(f"TTS: {len(audio_bytes)} bytes")
 
                 # Save to DB
                 character_id = character["id"] if character else None
                 await save_conversation(transcription, response_text, character_id)
 
-                # Send response
+                # Send response text then audio
                 await websocket.send_json({
                     "type": "response",
                     "transcription": transcription,
@@ -258,7 +278,7 @@ async def voice_websocket(websocket: WebSocket):
                 except Exception:
                     break
             finally:
-                if os.path.exists(temp_path):
+                if temp_path and os.path.exists(temp_path):
                     os.remove(temp_path)
 
     except WebSocketDisconnect:
