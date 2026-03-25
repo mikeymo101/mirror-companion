@@ -246,39 +246,29 @@ async def voice_websocket(websocket: WebSocket):
                 character, character_context, conversation_history = await get_ai_context()
                 tools = skill_registry.get_all_tool_definitions()
 
-                # Stream GPT response and TTS each sentence as it arrives
-                logger.info("Streaming AI response...")
-                full_response = ""
-                first_audio = True
-
-                async for sentence in openai_service.generate_response_streaming(
+                # Single GPT call
+                response_text = await openai_service.generate_response(
                     user_text=transcription,
                     conversation_history=conversation_history,
                     character_context=character_context,
                     tools=tools if tools else None,
                     skill_executor=execute_skill,
-                ):
-                    full_response += (" " + sentence if full_response else sentence)
-                    t_gpt = time.time()
-                    logger.info(f"GPT sentence ({t_gpt-t_start:.1f}s): '{sentence}'")
+                )
 
-                    # Send the text response on first chunk so UI updates fast
-                    if first_audio:
-                        await websocket.send_json({
-                            "type": "response",
-                            "transcription": transcription,
-                            "response_text": sentence,
-                        })
-                        first_audio = False
+                # Send text to frontend immediately
+                await websocket.send_json({
+                    "type": "response",
+                    "transcription": transcription,
+                    "response_text": response_text,
+                })
 
-                    # Generate and send TTS for this sentence
-                    audio_bytes = await openai_service.text_to_speech(sentence)
-                    await websocket.send_bytes(audio_bytes)
-                    logger.info(f"Sent audio chunk ({time.time()-t_gpt:.1f}s TTS)")
+                # Single TTS call
+                audio_bytes = await openai_service.text_to_speech(response_text)
+                await websocket.send_bytes(audio_bytes)
 
                 # Save to DB
                 character_id = character["id"] if character else None
-                await save_conversation(transcription, full_response, character_id)
+                await save_conversation(transcription, response_text, character_id)
 
                 t_total = time.time() - t_start
                 logger.info(f"Total pipeline: {t_total:.1f}s")

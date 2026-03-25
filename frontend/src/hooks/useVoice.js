@@ -27,42 +27,6 @@ export default function useVoice() {
   const audioChunksRef = useRef([]);
   const spaceHeldRef = useRef(false);
   const interimTranscriptRef = useRef('');
-  const audioQueueRef = useRef([]);
-  const isPlayingRef = useRef(false);
-
-  const playNextInQueue = useCallback(() => {
-    if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
-    isPlayingRef.current = true;
-    setCurrentState(VOICE_STATES.TALKING);
-
-    const blob = audioQueueRef.current.shift();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      isPlayingRef.current = false;
-      if (audioQueueRef.current.length > 0) {
-        playNextInQueue();
-      } else {
-        setCurrentState(VOICE_STATES.IDLE);
-        setResponse('');
-      }
-    };
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      isPlayingRef.current = false;
-      if (audioQueueRef.current.length > 0) {
-        playNextInQueue();
-      } else {
-        setCurrentState(VOICE_STATES.IDLE);
-      }
-    };
-    audio.play().catch((err) => {
-      console.error('[useVoice] Audio playback failed:', err);
-      isPlayingRef.current = false;
-      setCurrentState(VOICE_STATES.IDLE);
-    });
-  }, []);
 
   const connectWebSocket = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -79,10 +43,19 @@ export default function useVoice() {
       };
 
       ws.onmessage = (event) => {
-        // Binary message = TTS audio chunk — queue it for sequential playback
+        // Binary message = TTS audio
         if (event.data instanceof Blob) {
-          audioQueueRef.current.push(event.data);
-          playNextInQueue();
+          setCurrentState(VOICE_STATES.TALKING);
+          const url = URL.createObjectURL(event.data);
+          const audio = new Audio(url);
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            setCurrentState(VOICE_STATES.IDLE);
+          };
+          audio.play().catch((err) => {
+            console.error('[useVoice] Audio playback failed:', err);
+            setCurrentState(VOICE_STATES.IDLE);
+          });
           return;
         }
 
@@ -92,7 +65,7 @@ export default function useVoice() {
           switch (data.type) {
             case 'response':
               setTranscript(data.transcription || '');
-              setResponse((prev) => prev ? prev + ' ' + (data.response_text || '') : (data.response_text || ''));
+              setResponse(data.response_text || '');
               break;
             case 'silence':
               setCurrentState(VOICE_STATES.IDLE);
@@ -167,7 +140,6 @@ export default function useVoice() {
     setResponse('');
     setCurrentState(VOICE_STATES.LISTENING);
     interimTranscriptRef.current = '';
-    audioQueueRef.current = [];
 
     // Prefer Web Speech API (instant, free, no API call)
     if (hasSpeechRecognition) {
