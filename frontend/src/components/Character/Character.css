@@ -4,12 +4,12 @@
   align-items: center;
   justify-content: center;
   width: 280px;
-  height: 280px;
+  height: 300px;
 }
 
 .character__avatar {
-  width: 240px;
-  height: 240px;
+  width: 250px;
+  height: 270px;
   z-index: 2;
 }
 
@@ -24,9 +24,7 @@
   overflow: visible;
 }
 
-.char-glow {
-  transition: opacity 0.5s ease;
-}
+.char-glow { transition: opacity 0.5s ease; }
 
 /* ========================
    BLINK
@@ -47,109 +45,103 @@
    SPARKLES
    ======================== */
 
-.char-sparkle {
-  transform-origin: center;
-  transform-box: fill-box;
-}
+.char-sparkle { transform-origin: center; transform-box: fill-box; }
 .s1 { animation: sparkle-a 3s ease-in-out infinite; }
 .s2 { animation: sparkle-b 3.5s ease-in-out infinite 0.8s; }
 .s3 { animation: sparkle-a 2.8s ease-in-out infinite 1.2s; }
 .s4 { animation: sparkle-b 3.2s ease-in-out infinite 0.4s; }
 
 @keyframes sparkle-a {
-  0%, 100% { opacity: 0.2; transform: scale(0.6) translateY(0); }
+  0%, 100% { opacity: 0.15; transform: scale(0.5) translateY(0); }
   50% { opacity: 1; transform: scale(1.3) translateY(-6px); }
 }
 @keyframes sparkle-b {
-  0%, 100% { opacity: 0.15; transform: scale(0.5) translateY(0); }
-  50% { opacity: 0.9; transform: scale(1.4) translateY(-8px); }
+  0%, 100% { opacity: 0.1; transform: scale(0.4) translateY(0); }
+  50% { opacity: 0.8; transform: scale(1.4) translateY(-8px); }
 }
 
 /* ========================
-   WINGS — gentle idle flutter
-   ======================== */
-
-.char-wing-l {
-  transform-origin: 55px 95px;
-  animation: wing-l 3s ease-in-out infinite;
-}
-.char-wing-r {
-  transform-origin: 145px 95px;
-  animation: wing-r 3s ease-in-out infinite;
-}
-
-@keyframes wing-l {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-3deg); }
-}
-@keyframes wing-r {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(3deg); }
-}
-
-/* ========================
-   TAIL — gentle sway
+   TAIL
    ======================== */
 
 .char-tail {
-  transform-origin: right center;
-  transform-box: fill-box;
-  animation: tail 2.5s ease-in-out infinite;
+  transform-origin: 145px 170px;
+  animation: tail-wag 2.5s ease-in-out infinite;
 }
 
-@keyframes tail {
+@keyframes tail-wag {
   0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(5deg); }
-  75% { transform: rotate(-5deg); }
+  25% { transform: rotate(4deg); }
+  75% { transform: rotate(-4deg); }
 }
 
 /* ========================
-   ARMS
+   ARMS — resting position
    ======================== */
 
-.char-arm-l, .char-arm-r {
-  transform-box: fill-box;
-  transform-origin: center;
-}
+.char-arm-l { transform-origin: 55px 145px; }
+.char-arm-r { transform-origin: 145px 145px; }
 
 /* ========================
-   TALKING MOUTH — open/close cycle
+   FEET
+   ======================== */
+
+.char-foot-l, .char-foot-r { transform-origin: center bottom; transform-box: fill-box; }
+.char-leg-l, .char-leg-r { transform-origin: center top; transform-box: fill-box; }
+
+/* ========================
+   SPIKES
+   ======================== */
+
+.char-spikes { transform-origin: center bottom; transform-box: fill-box; }
+
+/* ========================
+   MOUTH — talking open/close
    ======================== */
 
 .char-mouth-open {
   transform-origin: center;
   transform-box: fill-box;
-  animation: mouth-talk 0.25s ease-in-out infinite alternate;
+  animation: mouth-talk 0.22s ease-in-out infinite alternate;
 }
 
 @keyframes mouth-talk {
-  0% { transform: scaleY(0.6) scaleX(0.9); }
-  100% { transform: scaleY(1.2) scaleX(1.05); }
+  0% { transform: scaleY(0.5) scaleX(0.85); }
+  100% { transform: scaleY(1.15) scaleX(1.05); }
 }
 
 /* ================================================================
-   STATE: IDLE — soft float
+   STATE: IDLE — soft breathing float
    ================================================================ */
 
 .char-svg--idle {
   animation: idle 4s ease-in-out infinite;
 }
-.char-svg--idle .char-glow {
-  animation: glow-pulse 4s ease-in-out infinite;
-}
+.char-svg--idle .char-glow { animation: glow-soft 4s ease-in-out infinite; }
+.char-svg--idle .char-arm-l { animation: arm-idle-l 3s ease-in-out infinite; }
+.char-svg--idle .char-arm-r { animation: arm-idle-r 3s ease-in-out infinite 1.5s; }
 
 @keyframes idle {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-5px); }
 }
 
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+@keyframes glow-soft {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes arm-idle-l {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-3deg); }
+}
+@keyframes arm-idle-r {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(3deg); }
 }
 
 /* ================================================================
-   STATE: WAKE — pop!
+   STATE: WAKE — excited pop
    ================================================================ */
 
 .char-svg--wake_word_detected {
@@ -163,74 +155,76 @@
 }
 
 /* ================================================================
-   STATE: LISTENING — lean in, big eyes, attentive
+   STATE: LISTENING — attentive, leaning in
    ================================================================ */
 
 .char-svg--listening {
-  animation: listen 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.3));
+  animation: listen 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(124, 190, 231, 0.3));
 }
-.char-svg--listening .char-glow {
-  animation: glow-pulse 1.5s ease-in-out infinite;
-}
+.char-svg--listening .char-glow { animation: glow-soft 1.5s ease-in-out infinite; }
 .char-svg--listening .char-pupil {
-  animation: blink 6s ease-in-out infinite; /* blink less */
-  transform: scale(1.15);
+  animation: blink 6s ease-in-out infinite;
+  transform: scale(1.1);
 }
-.char-svg--listening .char-wing-l { animation: wing-l-listen 1.5s ease-in-out infinite; }
-.char-svg--listening .char-wing-r { animation: wing-r-listen 1.5s ease-in-out infinite; }
 .char-svg--listening .char-head {
   transform-origin: center;
   transform-box: fill-box;
-  animation: head-tilt 3s ease-in-out infinite;
+  animation: head-curious 3s ease-in-out infinite;
 }
+.char-svg--listening .char-spikes { animation: spikes-perk 2s ease-in-out infinite; }
+.char-svg--listening .char-foot-l { animation: foot-tap 1s ease-in-out infinite; }
 
 @keyframes listen {
-  0%, 100% { transform: translateY(-2px) scale(1.03); }
-  50% { transform: translateY(-7px) scale(1.06); }
+  0%, 100% { transform: translateY(-2px) scale(1.02); }
+  50% { transform: translateY(-7px) scale(1.05); }
 }
 
-@keyframes wing-l-listen {
+@keyframes head-curious {
   0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-8deg); }
-}
-@keyframes wing-r-listen {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(8deg); }
+  30% { transform: rotate(-4deg) translateY(-1px); }
+  70% { transform: rotate(4deg) translateY(-1px); }
 }
 
-@keyframes head-tilt {
-  0%, 100% { transform: rotate(0deg); }
-  30% { transform: rotate(-3deg); }
-  70% { transform: rotate(3deg); }
+@keyframes spikes-perk {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.12); }
+}
+
+@keyframes foot-tap {
+  0%, 60%, 100% { transform: scaleY(1); }
+  70% { transform: scaleY(0.85); }
+  80% { transform: scaleY(1.05); }
 }
 
 /* ================================================================
-   STATE: PROCESSING — thinking wobble
+   STATE: PROCESSING — thinking
    ================================================================ */
 
 .char-svg--processing {
-  animation: process 1.2s ease-in-out infinite;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.25));
+  animation: process 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(124, 190, 231, 0.2));
 }
-.char-svg--processing .char-glow {
-  animation: glow-pulse 0.8s ease-in-out infinite;
-}
-.char-svg--processing .char-pupil {
-  animation: eyes-think 1.5s ease-in-out infinite;
-}
+.char-svg--processing .char-glow { animation: glow-soft 0.8s ease-in-out infinite; }
+.char-svg--processing .char-pupil { animation: eyes-think 1.5s ease-in-out infinite; }
+.char-svg--processing .char-arm-l { animation: arm-think-l 1.5s ease-in-out infinite; }
 .char-svg--processing .char-sparkle {
   animation: sparkle-fast 0.6s ease-in-out infinite alternate !important;
 }
 
 @keyframes process {
-  0%, 100% { transform: rotate(-1.5deg) scale(1.02); }
-  50% { transform: rotate(1.5deg) scale(1.04); }
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
 }
 
 @keyframes eyes-think {
   0%, 100% { transform: translateX(-2px) scaleY(1); }
   50% { transform: translateX(2px) scaleY(1); }
+}
+
+@keyframes arm-think-l {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-15deg) translateY(-5px); }
 }
 
 @keyframes sparkle-fast {
@@ -239,83 +233,161 @@
 }
 
 /* ================================================================
-   STATE: TALKING — bouncy, mouth opens, arms gesture, wings flap!
+   STATE: TALKING — the big one!
+   Natural movement: weight shifts, arm gestures, steps, head bobs.
+   Each body part has its OWN rhythm so it feels organic.
    ================================================================ */
 
 .char-svg--talking {
-  animation: talk-bounce 0.4s ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 15px rgba(192, 132, 252, 0.35));
+  animation: talk-sway 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 15px rgba(124, 190, 231, 0.3));
 }
-.char-svg--talking .char-glow {
-  animation: glow-pulse 0.4s ease-in-out infinite alternate;
+.char-svg--talking .char-glow { animation: glow-soft 0.5s ease-in-out infinite alternate; }
+.char-svg--talking .char-pupil { animation: none; }
+
+/* Head bobs like a person talking */
+.char-svg--talking .char-head {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+  animation: talk-head 0.8s ease-in-out infinite;
 }
-.char-svg--talking .char-pupil {
-  animation: none; /* no blinking while talking */
+
+/* Arms gesture — different timing per arm like real gesticulating */
+.char-svg--talking .char-arm-l { animation: talk-gesture-l 1.2s ease-in-out infinite; }
+.char-svg--talking .char-arm-r { animation: talk-gesture-r 0.9s ease-in-out infinite; }
+
+/* Body shifts weight side to side */
+.char-svg--talking .char-body {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+  animation: talk-body-shift 1.8s ease-in-out infinite;
 }
-.char-svg--talking .char-wing-l { animation: wing-l-talk 0.3s ease-in-out infinite alternate; }
-.char-svg--talking .char-wing-r { animation: wing-r-talk 0.3s ease-in-out infinite alternate; }
-.char-svg--talking .char-tail { animation: tail-talk 0.3s ease-in-out infinite alternate; }
-.char-svg--talking .char-arm-l { animation: arm-l-talk 0.4s ease-in-out infinite alternate; }
-.char-svg--talking .char-arm-r { animation: arm-r-talk 0.4s ease-in-out infinite alternate 0.2s; }
+
+/* Tail wags with excitement */
+.char-svg--talking .char-tail { animation: talk-tail 0.4s ease-in-out infinite alternate; }
+
+/* Little walking/stepping motion */
+.char-svg--talking .char-foot-l { animation: talk-step-l 1.8s ease-in-out infinite; }
+.char-svg--talking .char-foot-r { animation: talk-step-r 1.8s ease-in-out infinite 0.9s; }
+.char-svg--talking .char-leg-l { animation: talk-leg-l 1.8s ease-in-out infinite; }
+.char-svg--talking .char-leg-r { animation: talk-leg-r 1.8s ease-in-out infinite 0.9s; }
+
+/* Spikes bounce with emphasis */
+.char-svg--talking .char-spikes {
+  animation: talk-spikes 0.6s ease-in-out infinite alternate;
+}
+
 .char-svg--talking .char-sparkle {
   animation: sparkle-fast 0.5s ease-in-out infinite alternate !important;
 }
 
-@keyframes talk-bounce {
-  0% { transform: translateY(0) scale(1); }
-  100% { transform: translateY(-7px) scale(1.04); }
+/* Whole character sways — like shifting weight between feet */
+@keyframes talk-sway {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(-3px) translateY(-3px); }
+  50% { transform: translateX(0) translateY(-1px); }
+  75% { transform: translateX(3px) translateY(-3px); }
 }
 
-@keyframes wing-l-talk {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(-14deg); }
-}
-@keyframes wing-r-talk {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(14deg); }
-}
-
-@keyframes tail-talk {
-  0% { transform: rotate(-8deg); }
-  100% { transform: rotate(8deg); }
+/* Head nods and tilts while talking */
+@keyframes talk-head {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  20% { transform: rotate(-3deg) translateY(-2px); }
+  40% { transform: rotate(1deg) translateY(0); }
+  60% { transform: rotate(2deg) translateY(-3px); }
+  80% { transform: rotate(-1deg) translateY(-1px); }
 }
 
-@keyframes arm-l-talk {
-  0% { transform: rotate(0deg) translateY(0); }
-  100% { transform: rotate(-12deg) translateY(-3px); }
+/* Left arm gestures UP (like making a point) */
+@keyframes talk-gesture-l {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  15% { transform: rotate(-20deg) translateY(-8px); }
+  30% { transform: rotate(-10deg) translateY(-4px); }
+  50% { transform: rotate(-25deg) translateY(-10px); }
+  70% { transform: rotate(-5deg) translateY(-2px); }
 }
-@keyframes arm-r-talk {
-  0% { transform: rotate(0deg) translateY(0); }
-  100% { transform: rotate(12deg) translateY(-3px); }
+
+/* Right arm gestures with different timing */
+@keyframes talk-gesture-r {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(15deg) translateY(-6px); }
+  50% { transform: rotate(5deg) translateY(-2px); }
+  75% { transform: rotate(22deg) translateY(-9px); }
+}
+
+/* Body leans with weight shift */
+@keyframes talk-body-shift {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-1.5deg); }
+  75% { transform: rotate(1.5deg); }
+}
+
+/* Tail excited wag */
+@keyframes talk-tail {
+  0% { transform: rotate(-6deg); }
+  100% { transform: rotate(6deg); }
+}
+
+/* Feet do little steps */
+@keyframes talk-step-l {
+  0%, 40%, 100% { transform: translateY(0) scaleY(1); }
+  20% { transform: translateY(-3px) scaleY(0.9); }
+  30% { transform: translateY(1px) scaleY(1.05); }
+}
+
+@keyframes talk-step-r {
+  0%, 40%, 100% { transform: translateY(0) scaleY(1); }
+  20% { transform: translateY(-3px) scaleY(0.9); }
+  30% { transform: translateY(1px) scaleY(1.05); }
+}
+
+@keyframes talk-leg-l {
+  0%, 40%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-2px); }
+}
+
+@keyframes talk-leg-r {
+  0%, 40%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-2px); }
+}
+
+@keyframes talk-spikes {
+  0% { transform: scaleY(1); }
+  100% { transform: scaleY(1.1); }
 }
 
 /* ================================================================
-   STATE: HAPPY — big joyful bounces
+   STATE: HAPPY — bouncing with joy!
    ================================================================ */
 
 .char-svg--happy {
-  animation: happy 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) infinite alternate;
-  filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.35));
+  animation: happy-jump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) infinite alternate;
+  filter: drop-shadow(0 0 18px rgba(255, 200, 73, 0.35));
 }
-.char-svg--happy .char-glow {
-  animation: glow-pulse 0.3s ease-in-out infinite alternate;
-}
-.char-svg--happy .char-wing-l { animation: wing-l-talk 0.25s ease-in-out infinite alternate; }
-.char-svg--happy .char-wing-r { animation: wing-r-talk 0.25s ease-in-out infinite alternate; }
-.char-svg--happy .char-tail { animation: tail-talk 0.2s ease-in-out infinite alternate; }
-.char-svg--happy .char-arm-l { animation: arm-l-talk 0.3s ease-in-out infinite alternate; }
-.char-svg--happy .char-arm-r { animation: arm-r-talk 0.3s ease-in-out infinite alternate 0.15s; }
-.char-svg--happy .char-sparkle {
-  animation: sparkle-fast 0.3s ease-in-out infinite alternate !important;
+.char-svg--happy .char-glow { animation: glow-soft 0.3s ease-in-out infinite alternate; }
+.char-svg--happy .char-arm-l { animation: happy-arm-l 0.3s ease-in-out infinite alternate; }
+.char-svg--happy .char-arm-r { animation: happy-arm-r 0.3s ease-in-out infinite alternate 0.15s; }
+.char-svg--happy .char-tail { animation: talk-tail 0.2s ease-in-out infinite alternate; }
+.char-svg--happy .char-foot-l { animation: talk-step-l 0.6s ease-in-out infinite; }
+.char-svg--happy .char-foot-r { animation: talk-step-r 0.6s ease-in-out infinite 0.3s; }
+.char-svg--happy .char-sparkle { animation: sparkle-fast 0.3s ease-in-out infinite alternate !important; }
+
+@keyframes happy-jump {
+  0% { transform: translateY(0) scale(1) rotate(-3deg); }
+  100% { transform: translateY(-16px) scale(1.08) rotate(3deg); }
 }
 
-@keyframes happy {
-  0% { transform: translateY(0) scale(1) rotate(-2deg); }
-  100% { transform: translateY(-14px) scale(1.08) rotate(2deg); }
+@keyframes happy-arm-l {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-35deg) translateY(-12px); }
+}
+@keyframes happy-arm-r {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(35deg) translateY(-12px); }
 }
 
 /* ================================================================
-   STATE: SLEEPY — slow drift, droopy
+   STATE: SLEEPY — slow droopy sway
    ================================================================ */
 
 .char-svg--sleepy {
@@ -323,8 +395,6 @@
   opacity: 0.6;
   filter: brightness(0.7);
 }
-.char-svg--sleepy .char-wing-l { animation: wing-l 6s ease-in-out infinite; }
-.char-svg--sleepy .char-wing-r { animation: wing-r 6s ease-in-out infinite; }
 
 @keyframes sleepy {
   0%, 100% { transform: translateY(0) rotate(-1deg); }
@@ -341,29 +411,29 @@
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(124, 190, 231, 0.15);
   pointer-events: none;
   opacity: 0;
   z-index: 1;
 }
 
-.character__ripple--1 { width: 250px; height: 250px; }
-.character__ripple--2 { width: 300px; height: 300px; }
-.character__ripple--3 { width: 350px; height: 350px; }
+.character__ripple--1 { width: 260px; height: 260px; }
+.character__ripple--2 { width: 310px; height: 310px; }
+.character__ripple--3 { width: 360px; height: 360px; }
 
 .character--listening .character__ripple {
   animation: ripple 2.5s ease-out infinite;
-  border-color: rgba(139, 92, 246, 0.25);
+  border-color: rgba(124, 190, 231, 0.25);
 }
 .character--listening .character__ripple--2 { animation-delay: 0.8s; }
 .character--listening .character__ripple--3 { animation-delay: 1.6s; }
 
 .character--talking .character__ripple {
-  animation: ripple 1.5s ease-out infinite;
-  border-color: rgba(192, 132, 252, 0.25);
+  animation: ripple 1.8s ease-out infinite;
+  border-color: rgba(124, 190, 231, 0.2);
 }
-.character--talking .character__ripple--2 { animation-delay: 0.5s; }
-.character--talking .character__ripple--3 { animation-delay: 1s; }
+.character--talking .character__ripple--2 { animation-delay: 0.6s; }
+.character--talking .character__ripple--3 { animation-delay: 1.2s; }
 
 @keyframes ripple {
   0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
