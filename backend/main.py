@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.database import init_db
+from skills.registry import skill_registry
 from routes.voice import router as voice_router
 from routes.character import router as character_router
 from routes.chores import router as chores_router
@@ -35,6 +36,8 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Mirror Companion backend...")
     await init_db()
     logger.info("Database initialized.")
+    skill_registry.auto_discover()
+    logger.info(f"Skills loaded: {skill_registry.list_skills()}")
     yield
     logger.info("Shutting down Mirror Companion backend.")
 
@@ -65,7 +68,11 @@ app.include_router(dashboard_router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "service": "mirror-companion"}
+    return {
+        "status": "ok",
+        "service": "mirror-companion",
+        "skills": skill_registry.list_skills(),
+    }
 
 
 if __name__ == "__main__":
