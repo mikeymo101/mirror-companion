@@ -1,18 +1,20 @@
 """Weather skill — fetches current weather using Open-Meteo API (free, no key needed)."""
 
 import os
+import time
 
 import aiohttp
 
 from skills.base import Skill
 
+# Cache weather for 10 minutes to avoid repeated API calls
+_weather_cache = {"result": None, "timestamp": 0}
+CACHE_TTL = 600  # seconds
+
 
 class WeatherSkill(Skill):
     name = "get_weather"
     description = "Get the current weather for a location"
-
-    # Default location (can be overridden in .env)
-    # User can set WEATHER_LAT and WEATHER_LON in .env
 
     def get_tool_definition(self):
         return {
@@ -33,7 +35,12 @@ class WeatherSkill(Skill):
         }
 
     async def execute(self, **kwargs) -> str:
-        """Fetch current weather from Open-Meteo."""
+        """Fetch current weather from Open-Meteo (cached 10 min)."""
+        now = time.time()
+        if _weather_cache["result"] and (now - _weather_cache["timestamp"]) < CACHE_TTL:
+            self.logger.info("Weather: returning cached result")
+            return _weather_cache["result"]
+
         lat = os.environ.get("WEATHER_LAT", "40.7128")  # Default: NYC
         lon = os.environ.get("WEATHER_LON", "-74.0060")
 
@@ -78,6 +85,8 @@ class WeatherSkill(Skill):
             elif rain_chance is not None:
                 result += "No rain expected today! "
 
+            _weather_cache["result"] = result
+            _weather_cache["timestamp"] = time.time()
             return result
 
         except Exception as e:

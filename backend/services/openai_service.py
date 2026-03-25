@@ -124,26 +124,36 @@ class OpenAIService:
                 messages.extend(conversation_history)
             messages.append({"role": "user", "content": user_text})
 
-            # Build request kwargs
-            request_kwargs = {
-                "model": "gpt-4o-mini",
-                "messages": messages,
-                "max_tokens": 60,
-                "temperature": 0.8,
-            }
+            # Use Groq Llama for speed, fall back to OpenAI GPT
+            use_groq = bool(os.environ.get("GROQ_API_KEY"))
 
-            # Add tools if any skills are registered
-            if tools:
-                request_kwargs["tools"] = tools
-                request_kwargs["tool_choice"] = "auto"
-
-            logger.info(f"Generating response for: {user_text}")
-            response = await self.client.chat.completions.create(**request_kwargs)
+            if use_groq:
+                request_kwargs = {
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": messages,
+                    "max_tokens": 60,
+                    "temperature": 0.8,
+                }
+                logger.info(f"Generating response via Groq: {user_text}")
+                response = await self.groq_client.chat.completions.create(**request_kwargs)
+            else:
+                request_kwargs = {
+                    "model": "gpt-4o-mini",
+                    "messages": messages,
+                    "max_tokens": 60,
+                    "temperature": 0.8,
+                }
+                # Add tools if any skills are registered
+                if tools:
+                    request_kwargs["tools"] = tools
+                    request_kwargs["tool_choice"] = "auto"
+                logger.info(f"Generating response via OpenAI: {user_text}")
+                response = await self.client.chat.completions.create(**request_kwargs)
 
             message = response.choices[0].message
 
-            # Handle tool calls (skill execution)
-            if message.tool_calls and skill_executor:
+            # Handle tool calls (OpenAI fallback only)
+            if not use_groq and message.tool_calls and skill_executor:
                 messages.append(message)
 
                 for tool_call in message.tool_calls:
@@ -160,7 +170,6 @@ class OpenAIService:
                         "content": result,
                     })
 
-                # Get final response with tool results
                 final_response = await self.client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=messages,
@@ -171,7 +180,8 @@ class OpenAIService:
             else:
                 ai_text = message.content
 
-            logger.info(f"GPT ({time.time()-t0:.1f}s): {ai_text}")
+            provider = "Groq" if use_groq else "OpenAI"
+            logger.info(f"{provider} LLM ({time.time()-t0:.1f}s): {ai_text}")
             return ai_text
 
         except Exception as e:
