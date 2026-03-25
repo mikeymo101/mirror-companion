@@ -8,14 +8,6 @@
   transition: transform 0.6s ease;
 }
 
-/* Orb SVG */
-.character__orb {
-  width: 200px;
-  height: 200px;
-  z-index: 2;
-  transition: filter 0.4s ease;
-}
-
 /* Character avatar (SVG animal) */
 .character__avatar {
   width: 200px;
@@ -23,99 +15,756 @@
   z-index: 2;
 }
 
+/* Orb SVG (fallback) */
+.character__orb {
+  width: 200px;
+  height: 200px;
+  z-index: 2;
+  transition: filter 0.4s ease;
+}
+
+/* ========================
+   BASE CHARACTER STYLES
+   ======================== */
+
 .char-svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));
-  transition: transform 0.3s ease;
+  transition: filter 0.4s ease;
 }
 
-/* Character eye blink */
+/* Background glow pulses gently */
+.char-glow {
+  transition: opacity 0.4s ease;
+}
+
+/* ========================
+   EYE BLINK ANIMATION
+   ======================== */
+
 .char-eye {
-  animation: char-blink 4s ease-in-out infinite;
+  animation: char-blink 3.5s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
 @keyframes char-blink {
-  0%, 45%, 55%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(0.1); }
+  0%, 42%, 48%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.05); }
 }
 
-/* Dragon sparkles */
+/* Eye shine follows the eye */
+.char-eye-shine {
+  animation: char-blink 3.5s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* ========================
+   DRAGON SPARKLES
+   ======================== */
+
 .char-sparkle {
-  animation: sparkle-float 3s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
-@keyframes sparkle-float {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(-5px); }
+.char-sparkle-1 { animation: sparkle-1 2.5s ease-in-out infinite; }
+.char-sparkle-2 { animation: sparkle-2 3.2s ease-in-out infinite 0.5s; }
+.char-sparkle-3 { animation: sparkle-1 2.8s ease-in-out infinite 1s; }
+.char-sparkle-4 { animation: sparkle-2 3.5s ease-in-out infinite 1.5s; }
+.char-sparkle-5 { animation: sparkle-1 3s ease-in-out infinite 0.3s; }
+.char-sparkle-6 { animation: sparkle-2 2.7s ease-in-out infinite 0.8s; }
+
+@keyframes sparkle-1 {
+  0%, 100% { opacity: 0.2; transform: translateY(0) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-8px) scale(1.3); }
 }
 
-/* State-based character animations */
+@keyframes sparkle-2 {
+  0%, 100% { opacity: 0.15; transform: translateY(0) scale(0.7); }
+  50% { opacity: 0.9; transform: translateY(-10px) scale(1.4); }
+}
+
+/* ========================
+   DRAGON SMOKE PUFFS
+   ======================== */
+
+.char-smoke {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.char-smoke-1 {
+  animation: smoke-puff 4s ease-out infinite;
+}
+
+.char-smoke-2 {
+  animation: smoke-puff 4s ease-out infinite 2s;
+}
+
+@keyframes smoke-puff {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  10% { opacity: 0.2; }
+  40% { opacity: 0.1; transform: translateY(-12px) scale(1.5); }
+  60% { opacity: 0; transform: translateY(-18px) scale(2); }
+  100% { opacity: 0; transform: translateY(-18px) scale(2); }
+}
+
+/* ========================
+   DRAGON FIRE (hidden by default, shown when talking)
+   ======================== */
+
+.char-fire circle {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* ========================
+   WING ANIMATIONS
+   ======================== */
+
+.char-wing-left {
+  transform-origin: 68px 110px;
+  animation: wing-idle-left 3s ease-in-out infinite;
+}
+
+.char-wing-right {
+  transform-origin: 132px 110px;
+  animation: wing-idle-right 3s ease-in-out infinite;
+}
+
+@keyframes wing-idle-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-3deg); }
+}
+
+@keyframes wing-idle-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ========================
+   TAIL ANIMATION
+   ======================== */
+
+.char-tail {
+  transform-origin: right center;
+  transform-box: fill-box;
+  animation: tail-wag 2.5s ease-in-out infinite;
+}
+
+@keyframes tail-wag {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+.char-tail-tip {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: tail-tip-glow 2s ease-in-out infinite;
+}
+
+@keyframes tail-tip-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ========================
+   EAR ANIMATIONS
+   ======================== */
+
+.char-ear-left {
+  transform-origin: bottom center;
+  transform-box: fill-box;
+}
+
+.char-ear-right {
+  transform-origin: bottom center;
+  transform-box: fill-box;
+}
+
+/* ========================
+   HEAD BOB
+   ======================== */
+
+.char-head {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* ========================
+   WHISKER TWITCH
+   ======================== */
+
+.char-whiskers {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: whisker-twitch 4s ease-in-out infinite;
+}
+
+@keyframes whisker-twitch {
+  0%, 90%, 100% { transform: scaleX(1); }
+  93% { transform: scaleX(1.05); }
+  96% { transform: scaleX(0.97); }
+}
+
+/* ========================
+   CHEEK BLUSH
+   ======================== */
+
+.char-cheek {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cheek-pulse 3s ease-in-out infinite;
+}
+
+@keyframes cheek-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.65; }
+}
+
+/* ========================
+   PAW ANIMATIONS
+   ======================== */
+
+.char-paw-left, .char-paw-right {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* ========================
+   SPIKES ANIMATION
+   ======================== */
+
+.char-spikes {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+  animation: spikes-pulse 3s ease-in-out infinite;
+}
+
+@keyframes spikes-pulse {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.08); }
+}
+
+/* ================================================================
+   STATE: IDLE — gentle floating, soft breathing
+   ================================================================ */
+
 .char-svg--idle {
-  animation: char-idle-breathe 4s ease-in-out infinite;
+  animation: idle-float 4s ease-in-out infinite;
 }
+
+.char-svg--idle .char-glow {
+  animation: idle-glow 4s ease-in-out infinite;
+}
+
+@keyframes idle-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.02); }
+}
+
+@keyframes idle-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ================================================================
+   STATE: WAKE WORD — excited flash
+   ================================================================ */
+
+.char-svg--wake_word_detected {
+  animation: wake-pop 0.6s ease-out forwards;
+}
+
+.char-svg--wake_word_detected .char-glow {
+  animation: wake-glow-flash 0.6s ease-out forwards;
+}
+
+.char-svg--wake_word_detected .char-eye {
+  animation: wake-eyes 0.6s ease-out forwards;
+}
+
+@keyframes wake-pop {
+  0% { transform: scale(1); filter: brightness(1); }
+  30% { transform: scale(1.2); filter: brightness(1.5); }
+  100% { transform: scale(1.08); filter: brightness(1.2); }
+}
+
+@keyframes wake-glow-flash {
+  0% { opacity: 0.5; }
+  30% { opacity: 1.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes wake-eyes {
+  0% { transform: scaleY(1) scale(1); }
+  30% { transform: scaleY(1) scale(1.3); }
+  100% { transform: scaleY(1) scale(1.1); }
+}
+
+/* ================================================================
+   STATE: LISTENING — attentive lean forward, ears perk up, eyes wide
+   ================================================================ */
 
 .char-svg--listening {
-  animation: char-listen-pulse 1.5s ease-in-out infinite;
+  animation: listen-lean 2s ease-in-out infinite;
 }
 
+.char-svg--listening .char-glow {
+  animation: listen-glow 1.5s ease-in-out infinite;
+}
+
+.char-svg--listening .char-eye {
+  animation: listen-eyes 2s ease-in-out infinite;
+  transform: scale(1.15);
+}
+
+.char-svg--listening .char-ear-left {
+  animation: listen-ear-left 1.8s ease-in-out infinite;
+}
+
+.char-svg--listening .char-ear-right {
+  animation: listen-ear-right 1.8s ease-in-out infinite;
+}
+
+.char-svg--listening .char-wing-left {
+  animation: listen-wing-left 1.5s ease-in-out infinite;
+}
+
+.char-svg--listening .char-wing-right {
+  animation: listen-wing-right 1.5s ease-in-out infinite;
+}
+
+.char-svg--listening .char-head {
+  animation: listen-head-tilt 2.5s ease-in-out infinite;
+}
+
+@keyframes listen-lean {
+  0%, 100% { transform: translateY(0) scale(1.05); }
+  50% { transform: translateY(-4px) scale(1.08); }
+}
+
+@keyframes listen-glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1.2; }
+}
+
+@keyframes listen-eyes {
+  0%, 100% { transform: scale(1.15); }
+  50% { transform: scale(1.25); }
+}
+
+@keyframes listen-ear-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+@keyframes listen-ear-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes listen-wing-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+@keyframes listen-wing-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes listen-head-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-3deg); }
+  70% { transform: rotate(3deg); }
+}
+
+/* ================================================================
+   STATE: PROCESSING — thinking wobble, sparkles intensify
+   ================================================================ */
+
 .char-svg--processing {
-  animation: char-process 2s linear infinite;
+  animation: process-wobble 1.2s ease-in-out infinite;
+}
+
+.char-svg--processing .char-glow {
+  animation: process-glow 0.8s ease-in-out infinite;
+}
+
+.char-svg--processing .char-eye {
+  animation: process-eyes 1.5s ease-in-out infinite;
+}
+
+.char-svg--processing .char-sparkle {
+  animation: process-sparkle 0.6s ease-in-out infinite alternate !important;
+}
+
+.char-svg--processing .char-spikes {
+  animation: process-spikes 0.8s ease-in-out infinite;
+}
+
+.char-svg--processing .char-wing-left {
+  animation: process-wing-left 0.8s ease-in-out infinite;
+}
+
+.char-svg--processing .char-wing-right {
+  animation: process-wing-right 0.8s ease-in-out infinite;
+}
+
+@keyframes process-wobble {
+  0%, 100% { transform: rotate(-2deg) scale(1.02); }
+  50% { transform: rotate(2deg) scale(1.05); }
+}
+
+@keyframes process-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1.3; }
+}
+
+@keyframes process-eyes {
+  0%, 100% { transform: scaleY(0.85); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes process-sparkle {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.5); }
+}
+
+@keyframes process-spikes {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.15); }
+}
+
+@keyframes process-wing-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-5deg); }
+}
+
+@keyframes process-wing-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+
+/* ================================================================
+   STATE: TALKING — bouncy, expressive, wings flap, fire shows
+   ================================================================ */
+
+.char-svg--talking {
+  animation: talk-bounce 0.5s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-glow {
+  animation: talk-glow 0.4s ease-in-out infinite alternate;
 }
 
 .char-svg--talking .char-mouth {
-  animation: char-talk-mouth 0.3s ease-in-out infinite alternate;
+  animation: talk-mouth 0.25s ease-in-out infinite alternate;
 }
 
-.char-svg--talking {
-  animation: char-talk-bounce 0.4s ease-in-out infinite alternate;
+.char-svg--talking .char-eye {
+  animation: none;
+  transform: scaleY(1) scale(1.1);
 }
+
+.char-svg--talking .char-wing-left {
+  animation: talk-wing-left 0.3s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-wing-right {
+  animation: talk-wing-right 0.3s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-tail {
+  animation: talk-tail 0.4s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-head {
+  animation: talk-head 0.6s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-paw-left {
+  animation: talk-paw-left 0.5s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-paw-right {
+  animation: talk-paw-right 0.5s ease-in-out infinite alternate 0.25s;
+}
+
+.char-svg--talking .char-ear-left {
+  animation: talk-ear 0.4s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-ear-right {
+  animation: talk-ear 0.4s ease-in-out infinite alternate 0.2s;
+}
+
+.char-svg--talking .char-whiskers {
+  animation: talk-whiskers 0.3s ease-in-out infinite alternate;
+}
+
+.char-svg--talking .char-sparkle {
+  animation: talk-sparkle 0.5s ease-in-out infinite alternate !important;
+}
+
+/* Dragon fire particles appear when talking */
+.char-svg--talking .char-fire circle:nth-child(1) {
+  animation: fire-1 0.4s ease-out infinite;
+}
+.char-svg--talking .char-fire circle:nth-child(2) {
+  animation: fire-2 0.5s ease-out infinite 0.1s;
+}
+.char-svg--talking .char-fire circle:nth-child(3) {
+  animation: fire-3 0.35s ease-out infinite 0.2s;
+}
+.char-svg--talking .char-fire circle:nth-child(4) {
+  animation: fire-4 0.45s ease-out infinite 0.15s;
+}
+
+/* Dragon smoke intensifies when talking */
+.char-svg--talking .char-smoke-1 {
+  animation: smoke-talk 1.5s ease-out infinite;
+}
+.char-svg--talking .char-smoke-2 {
+  animation: smoke-talk 1.5s ease-out infinite 0.5s;
+}
+
+@keyframes talk-bounce {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-8px) scale(1.06); }
+}
+
+@keyframes talk-glow {
+  0% { opacity: 0.7; }
+  100% { opacity: 1.3; }
+}
+
+@keyframes talk-mouth {
+  0% { stroke-width: 1.5; transform: scaleY(1); }
+  100% { stroke-width: 2; transform: scaleY(1.4); }
+}
+
+@keyframes talk-wing-left {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-15deg); }
+}
+
+@keyframes talk-wing-right {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(15deg); }
+}
+
+@keyframes talk-tail {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(8deg); }
+}
+
+@keyframes talk-head {
+  0% { transform: rotate(-2deg) translateY(0); }
+  100% { transform: rotate(2deg) translateY(-2px); }
+}
+
+@keyframes talk-paw-left {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+@keyframes talk-paw-right {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+@keyframes talk-ear {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-5deg); }
+}
+
+@keyframes talk-whiskers {
+  0% { transform: scaleX(1); }
+  100% { transform: scaleX(1.08); }
+}
+
+@keyframes talk-sparkle {
+  0% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.6) translateY(-5px); }
+}
+
+@keyframes fire-1 {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  30% { opacity: 0.8; transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-18px) scale(0.3); }
+}
+
+@keyframes fire-2 {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  30% { opacity: 0.7; transform: translateY(-8px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-20px) scale(0.2); }
+}
+
+@keyframes fire-3 {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  30% { opacity: 0.6; transform: translate(-4px, -5px) scale(0.9); }
+  100% { opacity: 0; transform: translate(-8px, -15px) scale(0.2); }
+}
+
+@keyframes fire-4 {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  30% { opacity: 0.7; transform: translate(3px, -7px) scale(1); }
+  100% { opacity: 0; transform: translate(5px, -18px) scale(0.2); }
+}
+
+@keyframes smoke-talk {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  20% { opacity: 0.35; }
+  60% { opacity: 0.15; transform: translateY(-15px) scale(2); }
+  100% { opacity: 0; transform: translateY(-25px) scale(2.5); }
+}
+
+/* ================================================================
+   STATE: HAPPY — big bounces, everything wiggles
+   ================================================================ */
 
 .char-svg--happy {
-  animation: char-happy-bounce 0.5s ease-in-out infinite alternate;
+  animation: happy-jump 0.4s ease-in-out infinite alternate;
 }
+
+.char-svg--happy .char-glow {
+  animation: happy-glow 0.3s ease-in-out infinite alternate;
+}
+
+.char-svg--happy .char-eye {
+  animation: happy-eyes 0.6s ease-in-out infinite;
+  transform: scaleY(0.7) scaleX(1.1);
+}
+
+.char-svg--happy .char-wing-left {
+  animation: happy-wing-left 0.25s ease-in-out infinite alternate;
+}
+
+.char-svg--happy .char-wing-right {
+  animation: happy-wing-right 0.25s ease-in-out infinite alternate;
+}
+
+.char-svg--happy .char-tail {
+  animation: happy-tail 0.2s ease-in-out infinite alternate;
+}
+
+.char-svg--happy .char-ear-left {
+  animation: happy-ear 0.3s ease-in-out infinite alternate;
+}
+
+.char-svg--happy .char-ear-right {
+  animation: happy-ear 0.3s ease-in-out infinite alternate 0.15s;
+}
+
+.char-svg--happy .char-sparkle {
+  animation: happy-sparkle 0.4s ease-in-out infinite alternate !important;
+}
+
+@keyframes happy-jump {
+  0% { transform: translateY(0) scale(1) rotate(-2deg); }
+  100% { transform: translateY(-14px) scale(1.1) rotate(2deg); }
+}
+
+@keyframes happy-glow {
+  0% { opacity: 0.8; }
+  100% { opacity: 1.5; }
+}
+
+@keyframes happy-eyes {
+  0%, 100% { transform: scaleY(0.7) scaleX(1.1); }
+  50% { transform: scaleY(0.5) scaleX(1.15); }
+}
+
+@keyframes happy-wing-left {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-20deg); }
+}
+
+@keyframes happy-wing-right {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(20deg); }
+}
+
+@keyframes happy-tail {
+  0% { transform: rotate(-10deg); }
+  100% { transform: rotate(10deg); }
+}
+
+@keyframes happy-ear {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-6deg); }
+}
+
+@keyframes happy-sparkle {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 1; transform: scale(2) translateY(-8px); }
+}
+
+/* ================================================================
+   STATE: SLEEPY — slow droopy movements
+   ================================================================ */
 
 .char-svg--sleepy {
-  animation: char-sleepy 6s ease-in-out infinite;
-  opacity: 0.6;
+  animation: sleepy-sway 6s ease-in-out infinite;
+  opacity: 0.65;
 }
 
-@keyframes char-idle-breathe {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50% { transform: scale(1.03) translateY(-3px); }
+.char-svg--sleepy .char-glow {
+  animation: sleepy-glow 6s ease-in-out infinite;
+  opacity: 0.3;
 }
 
-@keyframes char-listen-pulse {
-  0%, 100% { transform: scale(1.05); }
-  50% { transform: scale(1.12); }
+.char-svg--sleepy .char-eye {
+  animation: sleepy-eyes 5s ease-in-out infinite;
 }
 
-@keyframes char-process {
-  0% { filter: drop-shadow(0 0 20px rgba(139,92,246,0.4)) hue-rotate(0deg); }
-  100% { filter: drop-shadow(0 0 20px rgba(139,92,246,0.4)) hue-rotate(360deg); }
+.char-svg--sleepy .char-wing-left {
+  animation: sleepy-wing 6s ease-in-out infinite;
 }
 
-@keyframes char-talk-bounce {
-  0% { transform: scale(1) translateY(0); }
-  100% { transform: scale(1.05) translateY(-4px); }
+.char-svg--sleepy .char-wing-right {
+  animation: sleepy-wing 6s ease-in-out infinite;
 }
 
-@keyframes char-talk-mouth {
-  0% { d: path("M 94 90 Q 100 96 106 90"); }
-  100% { d: path("M 94 90 Q 100 100 106 90"); }
+.char-svg--sleepy .char-ear-left,
+.char-svg--sleepy .char-ear-right {
+  animation: sleepy-ear 5s ease-in-out infinite;
 }
 
-@keyframes char-happy-bounce {
-  0% { transform: scale(1) translateY(0); }
-  100% { transform: scale(1.08) translateY(-10px); }
+@keyframes sleepy-sway {
+  0%, 100% { transform: translateY(0) scale(0.97) rotate(-1deg); }
+  50% { transform: translateY(3px) scale(1) rotate(1deg); }
 }
 
-@keyframes char-sleepy {
-  0%, 100% { transform: scale(0.97); }
-  50% { transform: scale(1.0); }
+@keyframes sleepy-glow {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.3; }
 }
 
-/* Ripple rings */
+@keyframes sleepy-eyes {
+  0%, 20%, 100% { transform: scaleY(0.3); }
+  10% { transform: scaleY(0.8); }
+}
+
+@keyframes sleepy-wing {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(0deg); }
+}
+
+@keyframes sleepy-ear {
+  0%, 100% { transform: rotate(5deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ================================================================
+   RIPPLE RINGS (behind character, visible in active states)
+   ================================================================ */
+
 .character__ripple {
   position: absolute;
   top: 50%;
@@ -128,30 +777,55 @@
   z-index: 1;
 }
 
-.character__ripple--1 {
-  width: 220px;
-  height: 220px;
+.character__ripple--1 { width: 220px; height: 220px; }
+.character__ripple--2 { width: 270px; height: 270px; }
+.character__ripple--3 { width: 320px; height: 320px; }
+
+/* Ripples during listening */
+.character--listening .character__ripple {
+  animation: ripple-out 2.5s ease-out infinite;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.character--listening .character__ripple--2 { animation-delay: 0.8s; }
+.character--listening .character__ripple--3 { animation-delay: 1.6s; }
+
+/* Ripples during talking */
+.character--talking .character__ripple {
+  animation: ripple-out 1.5s ease-out infinite;
+  border-color: rgba(244, 114, 182, 0.3);
+}
+.character--talking .character__ripple--2 { animation-delay: 0.5s; }
+.character--talking .character__ripple--3 { animation-delay: 1s; }
+
+/* Ripples during happy */
+.character--happy .character__ripple {
+  animation: ripple-out 1s ease-out infinite;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.character--happy .character__ripple--2 { animation-delay: 0.33s; }
+.character--happy .character__ripple--3 { animation-delay: 0.66s; }
+
+@keyframes ripple-out {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
 }
 
-.character__ripple--2 {
-  width: 270px;
-  height: 270px;
-}
+/* ================================================================
+   ORB FALLBACK ANIMATIONS (when no character SVG)
+   ================================================================ */
 
-.character__ripple--3 {
-  width: 320px;
-  height: 320px;
-}
-
-/* ===== IDLE STATE ===== */
 .character--idle .character__orb {
   animation: idle-breathe 4s ease-in-out infinite;
 }
-
 .character--idle .character__core {
   animation: idle-core-pulse 4s ease-in-out infinite;
 }
-
 .character--idle .character__inner {
   animation: idle-inner-glow 3s ease-in-out infinite;
 }
@@ -160,239 +834,61 @@
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.06); }
 }
-
 @keyframes idle-core-pulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 0.45; }
 }
-
 @keyframes idle-inner-glow {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 0.75; }
 }
 
-/* ===== WAKE WORD DETECTED ===== */
 .character--wake .character__orb {
   animation: wake-flash 0.6s ease-out forwards;
 }
-
 @keyframes wake-flash {
   0% { transform: scale(1); filter: brightness(1); }
   50% { transform: scale(1.2); filter: brightness(1.8); }
   100% { transform: scale(1.1); filter: brightness(1.3); }
 }
 
-/* ===== LISTENING STATE ===== */
 .character--listening .character__orb {
   animation: listening-pulse 1.5s ease-in-out infinite;
 }
-
-.character--listening .character__core {
-  animation: listening-core 1.5s ease-in-out infinite;
-}
-
-.character--listening .character__inner {
-  animation: listening-inner 1s ease-in-out infinite;
-}
-
-.character--listening .character__ripple {
-  animation: listening-ripple 2.5s ease-out infinite;
-}
-
-.character--listening .character__ripple--2 {
-  animation-delay: 0.8s;
-}
-
-.character--listening .character__ripple--3 {
-  animation-delay: 1.6s;
-}
-
 @keyframes listening-pulse {
   0%, 100% { transform: scale(1.05); }
   50% { transform: scale(1.15); }
 }
 
-@keyframes listening-core {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes listening-inner {
-  0%, 100% { opacity: 0.6; r: 20; }
-  50% { opacity: 0.9; r: 24; }
-}
-
-@keyframes listening-ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0.8);
-    opacity: 0.5;
-    border-color: rgba(6, 182, 212, 0.4);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.4);
-    opacity: 0;
-    border-color: rgba(6, 182, 212, 0);
-  }
-}
-
-/* ===== PROCESSING STATE ===== */
 .character--processing .character__orb {
   animation: processing-spin 2s linear infinite;
 }
-
-.character--processing .character__core {
-  animation: processing-core 0.8s ease-in-out infinite;
-}
-
-.character--processing .character__inner {
-  animation: processing-inner 0.8s ease-in-out infinite;
-}
-
 @keyframes processing-spin {
   0% { filter: hue-rotate(0deg); }
   100% { filter: hue-rotate(360deg); }
 }
 
-@keyframes processing-core {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
-@keyframes processing-inner {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.9; }
-}
-
-/* ===== TALKING STATE ===== */
 .character--talking .character__orb {
   animation: talking-pulse 0.4s ease-in-out infinite alternate;
 }
-
-.character--talking .character__core {
-  animation: talking-core 0.6s ease-in-out infinite alternate;
-}
-
-.character--talking .character__inner {
-  animation: talking-inner 0.3s ease-in-out infinite alternate;
-}
-
-.character--talking .character__ripple {
-  animation: talking-ripple 1.2s ease-out infinite;
-}
-
-.character--talking .character__ripple--2 {
-  animation-delay: 0.4s;
-}
-
-.character--talking .character__ripple--3 {
-  animation-delay: 0.8s;
-}
-
 @keyframes talking-pulse {
   0% { transform: scale(1.0); }
   100% { transform: scale(1.12); }
 }
 
-@keyframes talking-core {
-  0% { opacity: 0.4; }
-  100% { opacity: 0.7; }
-}
-
-@keyframes talking-inner {
-  0% { opacity: 0.5; }
-  100% { opacity: 1.0; }
-}
-
-@keyframes talking-ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0.9);
-    opacity: 0.4;
-    border-color: rgba(244, 114, 182, 0.4);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.3);
-    opacity: 0;
-    border-color: rgba(244, 114, 182, 0);
-  }
-}
-
-/* ===== HAPPY STATE ===== */
 .character--happy .character__orb {
-  animation: happy-bounce 0.5s ease-in-out infinite alternate;
+  animation: happy-bounce-orb 0.5s ease-in-out infinite alternate;
 }
-
-.character--happy .character__core {
-  animation: happy-core 0.6s ease-in-out infinite;
-}
-
-.character--happy .character__inner {
-  animation: happy-inner 0.4s ease-in-out infinite alternate;
-}
-
-.character--happy .character__ripple {
-  animation: happy-ripple 1s ease-out infinite;
-  border-color: rgba(251, 191, 36, 0.3);
-}
-
-.character--happy .character__ripple--2 {
-  animation-delay: 0.33s;
-}
-
-.character--happy .character__ripple--3 {
-  animation-delay: 0.66s;
-}
-
-@keyframes happy-bounce {
+@keyframes happy-bounce-orb {
   0% { transform: scale(1) translateY(0); }
   100% { transform: scale(1.1) translateY(-8px); }
 }
 
-@keyframes happy-core {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.85; }
-}
-
-@keyframes happy-inner {
-  0% { opacity: 0.7; }
-  100% { opacity: 1.0; }
-}
-
-@keyframes happy-ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0.9);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0;
-  }
-}
-
-/* ===== SLEEPY STATE ===== */
 .character--sleepy .character__orb {
   animation: sleepy-breathe 6s ease-in-out infinite;
   filter: brightness(0.5);
 }
-
-.character--sleepy .character__core {
-  animation: sleepy-core 6s ease-in-out infinite;
-}
-
-.character--sleepy .character__inner {
-  animation: sleepy-inner 6s ease-in-out infinite;
-}
-
 @keyframes sleepy-breathe {
   0%, 100% { transform: scale(0.95); }
   50% { transform: scale(1.0); }
-}
-
-@keyframes sleepy-core {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.25; }
-}
-
-@keyframes sleepy-inner {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.35; }
 }
