@@ -1,0 +1,136 @@
+.mirror {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+/* Subtle radial gradient in the background */
+.mirror::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.03) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Clock */
+.mirror__clock {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Center content */
+.mirror__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Wave visualization */
+.mirror__wave {
+  height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+/* Transcript */
+.mirror__transcript {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  text-align: center;
+  max-width: 400px;
+  animation: fade-in 0.3s ease;
+}
+
+/* Response text */
+.mirror__response {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  max-width: 500px;
+  line-height: 1.6;
+  animation: fade-in 0.4s ease;
+}
+
+/* Status text */
+.mirror__status {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: all 0.4s ease;
+  min-height: 1.2em;
+}
+
+.mirror__status--active {
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 2px;
+}
+
+/* Connection indicator */
+.mirror__connection {
+  position: absolute;
+  bottom: 60px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.5px;
+}
+
+.mirror__connection-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.6);
+  animation: blink 2s ease-in-out infinite;
+}
+
+/* Error message */
+.mirror__error {
+  position: absolute;
+  bottom: 90px;
+  font-size: 0.75rem;
+  color: rgba(239, 68, 68, 0.6);
+  animation: fade-in 0.3s ease;
+}
+
+/* Hint text */
+.mirror__hint {
+  position: absolute;
+  bottom: 24px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.5px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.2; }
+}

@@ -1,0 +1,85 @@
+.dashboard {
+  width: 100vw;
+  min-height: 100vh;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.dashboard__card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.dashboard__title {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 16px;
+}
+
+.dashboard__divider {
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(to right, #6366f1, #8b5cf6);
+  margin: 0 auto 24px;
+  border-radius: 1px;
+}
+
+.dashboard__message {
+  font-size: 1.1rem;
+  color: rgba(139, 92, 246, 0.8);
+  margin-bottom: 16px;
+  font-weight: 400;
+}
+
+.dashboard__sub {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.dashboard__features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.dashboard__feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.dashboard__feature-icon {
+  font-size: 1.1rem;
+}
+
+.dashboard__link {
+  display: inline-block;
+  color: rgba(99, 102, 241, 0.7);
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+.dashboard__link:hover {
+  color: rgba(99, 102, 241, 1);
+}

@@ -1,0 +1,26 @@
+.listening-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 50px;
+  padding: 0 20px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.listening-wave--active {
+  opacity: 1;
+}
+
+.listening-wave__bar {
+  width: 3px;
+  min-height: 4px;
+  background: linear-gradient(
+    to top,
+    rgba(6, 182, 212, 0.4),
+    rgba(139, 92, 246, 0.8)
+  );
+  border-radius: 2px;
+  transition: height 0.1s ease;
+}
