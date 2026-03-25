@@ -52,7 +52,7 @@ class JokesSkill(Skill):
 
     async def execute(self, **kwargs) -> str:
         setup, punchline = random.choice(self.JOKES)
-        return f"Here's a joke! {setup} ... {punchline}"
+        return f"Tell the child this joke exactly — first ask: {setup} Then pause and say the answer: {punchline}"
 
 
 def create_skill():
