@@ -228,13 +228,27 @@ async def voice_websocket(websocket: WebSocket):
 
     try:
         while True:
-            # Receive audio data from client
-            data = await websocket.receive_bytes()
+            # Receive audio data from client (JSON with base64 audio or raw bytes)
+            message = await websocket.receive()
+
+            if "text" in message:
+                # JSON message with base64 audio from browser
+                import json
+                import base64
+                payload = json.loads(message["text"])
+                if payload.get("type") != "audio" or not payload.get("audio"):
+                    continue
+                audio_data = base64.b64decode(payload["audio"])
+            elif "bytes" in message:
+                # Raw bytes
+                audio_data = message["bytes"]
+            else:
+                continue
 
             # Save received audio to temp file
             temp_path = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}.webm")
             with open(temp_path, "wb") as f:
-                f.write(data)
+                f.write(audio_data)
 
             try:
                 # Transcribe

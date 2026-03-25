@@ -36,6 +36,22 @@ export default function useVoice() {
       };
 
       ws.onmessage = (event) => {
+        // Binary message = audio bytes from TTS
+        if (event.data instanceof Blob) {
+          const url = URL.createObjectURL(event.data);
+          const audio = new Audio(url);
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            setCurrentState(VOICE_STATES.IDLE);
+          };
+          audio.play().catch((err) => {
+            console.error('[useVoice] Audio playback failed:', err);
+            setCurrentState(VOICE_STATES.IDLE);
+          });
+          return;
+        }
+
+        // Text message = JSON
         try {
           const data = JSON.parse(event.data);
 
@@ -51,12 +67,13 @@ export default function useVoice() {
               break;
 
             case 'response':
-              setResponse(data.text);
+              setTranscript(data.transcription || '');
+              setResponse(data.response_text || data.text || '');
               setCurrentState(VOICE_STATES.TALKING);
               break;
 
-            case 'audio':
-              playAudio(data.audio);
+            case 'silence':
+              setCurrentState(VOICE_STATES.IDLE);
               break;
 
             case 'done':
