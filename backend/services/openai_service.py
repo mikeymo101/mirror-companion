@@ -4,8 +4,9 @@ OpenAI Service — Whisper transcription, GPT-4o-mini with skills, and TTS.
 
 import os
 import json
+import time
 import logging
-from typing import Optional, List
+from typing import Optional, List, AsyncGenerator
 
 from openai import AsyncOpenAI
 
@@ -53,6 +54,7 @@ class OpenAIService:
 
     async def transcribe(self, audio_file_path: str) -> str:
         try:
+            t0 = time.time()
             logger.info(f"Transcribing: {audio_file_path}")
             with open(audio_file_path, "rb") as audio_file:
                 response = await self.client.audio.transcriptions.create(
@@ -60,7 +62,7 @@ class OpenAIService:
                     file=audio_file,
                     language="en",
                 )
-            logger.info(f"Transcription: {response.text}")
+            logger.info(f"Transcription ({time.time()-t0:.1f}s): {response.text}")
             return response.text
         except Exception as e:
             logger.error(f"Whisper failed: {e}", exc_info=True)
@@ -160,8 +162,98 @@ class OpenAIService:
             logger.error(f"GPT failed: {e}", exc_info=True)
             raise
 
+    async def generate_response_streaming(
+        self,
+        user_text: str,
+        conversation_history: Optional[list] = None,
+        character_context: Optional[dict] = None,
+        tools: Optional[List[dict]] = None,
+        skill_executor=None,
+    ) -> AsyncGenerator[str, None]:
+        """Stream GPT response, yielding sentence chunks as they complete."""
+        try:
+            system_prompt = SYSTEM_PROMPT_BASE
+            child_name = os.environ.get("CHILD_NAME")
+            if child_name:
+                system_prompt += CHILD_NAME_PROMPT.format(child_name=child_name)
+            if character_context:
+                system_prompt += CHARACTER_PROMPT.format(
+                    char_name=character_context.get("name", "Friend"),
+                    char_type=character_context.get("type", "friend"),
+                    personality=character_context.get("personality", ""),
+                )
+
+            messages = [{"role": "system", "content": system_prompt}]
+            if conversation_history:
+                messages.extend(conversation_history)
+            messages.append({"role": "user", "content": user_text})
+
+            request_kwargs = {
+                "model": "gpt-4o-mini",
+                "messages": messages,
+                "max_tokens": 150,
+                "temperature": 0.8,
+                "stream": True,
+            }
+
+            # If tools are present, do a non-streaming call first to handle tool calls
+            if tools:
+                request_kwargs_nostream = {**request_kwargs, "stream": False, "tools": tools, "tool_choice": "auto"}
+                response = await self.client.chat.completions.create(**request_kwargs_nostream)
+                message = response.choices[0].message
+
+                if message.tool_calls and skill_executor:
+                    messages.append(message)
+                    for tool_call in message.tool_calls:
+                        fn_name = tool_call.function.name
+                        fn_args = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
+                        logger.info(f"Executing skill: {fn_name}({fn_args})")
+                        result = await skill_executor(fn_name, fn_args)
+                        messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": result})
+
+                    # Stream the final response after tool execution
+                    request_kwargs["messages"] = messages
+                elif message.content:
+                    # No tool calls — just yield the whole response
+                    yield message.content
+                    return
+
+            # Stream response, yield on sentence boundaries
+            logger.info(f"Streaming response for: {user_text}")
+            stream = await self.client.chat.completions.create(**request_kwargs)
+            buffer = ""
+            sentence_enders = {'.', '!', '?'}
+
+            async for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    buffer += delta.content
+                    # Yield on sentence boundaries
+                    while buffer:
+                        end_idx = -1
+                        for i, ch in enumerate(buffer):
+                            if ch in sentence_enders:
+                                end_idx = i
+                                break
+                        if end_idx >= 0:
+                            sentence = buffer[:end_idx + 1].strip()
+                            buffer = buffer[end_idx + 1:]
+                            if sentence:
+                                yield sentence
+                        else:
+                            break
+
+            # Yield any remaining text
+            if buffer.strip():
+                yield buffer.strip()
+
+        except Exception as e:
+            logger.error(f"GPT streaming failed: {e}", exc_info=True)
+            raise
+
     async def text_to_speech(self, text: str) -> bytes:
         try:
+            t0 = time.time()
             logger.info(f"TTS: {text[:50]}...")
             response = await self.client.audio.speech.create(
                 model="tts-1",
@@ -170,7 +262,7 @@ class OpenAIService:
                 response_format="mp3",
             )
             audio_bytes = response.content
-            logger.info(f"TTS: {len(audio_bytes)} bytes")
+            logger.info(f"TTS: {len(audio_bytes)} bytes in {time.time()-t0:.1f}s")
             return audio_bytes
         except Exception as e:
             logger.error(f"TTS failed: {e}", exc_info=True)
