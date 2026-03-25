@@ -34,6 +34,8 @@ logger = logging.getLogger("mirror-companion")
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     logger.info("Starting Mirror Companion backend...")
+    logger.info(f"GROQ_API_KEY: {'set (' + os.environ.get('GROQ_API_KEY', '')[:8] + '...)' if os.environ.get('GROQ_API_KEY') else 'NOT SET'}")
+    logger.info(f"OPENAI_API_KEY: {'set' if os.environ.get('OPENAI_API_KEY') else 'NOT SET'}")
     await init_db()
     logger.info("Database initialized.")
     skill_registry.auto_discover()

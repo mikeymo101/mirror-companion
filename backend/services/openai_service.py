@@ -25,8 +25,10 @@ You are talking to a young child. Follow these rules strictly:
 - Never give medical, safety, or parenting advice. If asked something you shouldn't answer, \
 gently redirect to something fun.
 - You love playing games, telling stories, singing songs, and being silly.
-- Keep responses under 3 sentences. Young children have short attention spans.
+- Keep responses to 1-2 sentences MAX. Young children have short attention spans.
+- NEVER respond with more than 2 sentences. This is critical.
 - Use the child's name when you know it to make them feel special.
+- Do NOT use emojis — your responses will be spoken aloud.
 - You have special abilities (tools) you can use to get information like weather and time. \
 Use them when the child asks about these things instead of making up answers."""
 
@@ -230,7 +232,7 @@ class OpenAIService:
                 "stream": True,
             }
 
-            # If tools are present, do a non-streaming call first to handle tool calls
+            # If tools are present, do a non-streaming call first to check for tool calls
             if tools:
                 request_kwargs_nostream = {**request_kwargs, "stream": False, "tools": tools, "tool_choice": "auto"}
                 response = await self.client.chat.completions.create(**request_kwargs_nostream)
@@ -247,9 +249,10 @@ class OpenAIService:
 
                     # Stream the final response after tool execution
                     request_kwargs["messages"] = messages
-                elif message.content:
-                    # No tool calls — just yield the whole response
-                    yield message.content
+                else:
+                    # No tool calls — yield the response and done
+                    if message.content:
+                        yield message.content
                     return
 
             # Stream response, yield on sentence boundaries
@@ -262,16 +265,16 @@ class OpenAIService:
                 delta = chunk.choices[0].delta
                 if delta.content:
                     buffer += delta.content
-                    # Yield on sentence boundaries
-                    while buffer:
+                    # Yield complete sentences
+                    while True:
                         end_idx = -1
                         for i, ch in enumerate(buffer):
-                            if ch in sentence_enders:
+                            if ch in sentence_enders and (i + 1 >= len(buffer) or buffer[i + 1] in (' ', '\n', '"', "'", '\0')):
                                 end_idx = i
                                 break
                         if end_idx >= 0:
                             sentence = buffer[:end_idx + 1].strip()
-                            buffer = buffer[end_idx + 1:]
+                            buffer = buffer[end_idx + 1:].lstrip()
                             if sentence:
                                 yield sentence
                         else:
