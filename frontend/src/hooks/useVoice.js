@@ -45,25 +45,28 @@ export default function useVoice() {
       ws.onmessage = (event) => {
         // Binary message = TTS audio
         if (event.data instanceof Blob) {
+          console.log('[useVoice] Audio blob received, size:', event.data.size);
           setCurrentState(VOICE_STATES.TALKING);
           const url = URL.createObjectURL(event.data);
           const audio = new Audio(url);
+          let finished = false;
 
           const finishTalking = () => {
+            if (finished) return; // prevent double-fire
+            finished = true;
+            console.log('[useVoice] Audio ended, going idle');
             URL.revokeObjectURL(url);
             setCurrentState(VOICE_STATES.IDLE);
           };
 
           audio.onended = finishTalking;
-          audio.onerror = finishTalking;
+          audio.onerror = (e) => {
+            console.error('[useVoice] Audio error:', e);
+            finishTalking();
+          };
 
-          // Fallback: if onended doesn't fire, check when audio stops
-          audio.ontimeupdate = () => {
-            if (audio.currentTime >= audio.duration - 0.1) {
-              audio.ontimeupdate = null;
-              // Small delay so last words are heard
-              setTimeout(finishTalking, 300);
-            }
+          audio.onloadedmetadata = () => {
+            console.log('[useVoice] Audio duration:', audio.duration, 'seconds');
           };
 
           audio.play().catch((err) => {
@@ -80,8 +83,6 @@ export default function useVoice() {
             case 'response':
               setTranscript(data.transcription || '');
               setResponse(data.response_text || '');
-              // Start talking animation immediately — don't wait for audio blob
-              setCurrentState(VOICE_STATES.TALKING);
               break;
             case 'silence':
               setCurrentState(VOICE_STATES.IDLE);
