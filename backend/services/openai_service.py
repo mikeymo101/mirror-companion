@@ -35,23 +35,21 @@ CHARACTER_PROMPT = """
 Stay in character as {char_name}."""
 
 
-# Try to load Piper for local TTS
-_piper_voice = None
+# Piper TTS config
+_piper_available = False
 PIPER_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "piper", "en_US-lessac-medium.onnx")
 
-def _load_piper():
-    global _piper_voice
-    try:
-        from piper import PiperVoice
-        if os.path.exists(PIPER_MODEL_PATH):
-            _piper_voice = PiperVoice.load(PIPER_MODEL_PATH)
-            logger.info(f"Piper TTS loaded: {PIPER_MODEL_PATH}")
+def _check_piper():
+    global _piper_available
+    if os.path.exists(PIPER_MODEL_PATH):
+        import shutil
+        if shutil.which("piper"):
+            _piper_available = True
+            logger.info(f"Piper TTS available: {PIPER_MODEL_PATH}")
         else:
-            logger.warning(f"Piper model not found at {PIPER_MODEL_PATH} — will use OpenAI TTS")
-    except ImportError:
-        logger.warning("piper-tts not installed — will use OpenAI TTS")
-    except Exception as e:
-        logger.warning(f"Failed to load Piper: {e} — will use OpenAI TTS")
+            logger.warning("piper command not found in PATH — will use OpenAI TTS")
+    else:
+        logger.warning(f"Piper model not found at {PIPER_MODEL_PATH} — will use OpenAI TTS")
 
 
 class OpenAIService:
@@ -60,9 +58,8 @@ class OpenAIService:
     def __init__(self):
         self._client = None
         self._groq_client = None
-        # Load Piper on first instantiation
-        if _piper_voice is None:
-            _load_piper()
+        if not _piper_available:
+            _check_piper()
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -217,31 +214,36 @@ class OpenAIService:
 
     async def text_to_speech(self, text: str) -> bytes:
         """Generate speech — uses Piper (local, fast) with OpenAI TTS as fallback."""
-        if _piper_voice is not None:
+        if _piper_available:
             return await self._tts_piper(text)
         return await self._tts_openai(text)
 
     async def _tts_piper(self, text: str) -> bytes:
-        """Local TTS via Piper — no network, ~0.2-0.5s on Pi 5."""
+        """Local TTS via Piper CLI — no network, ~0.3-0.8s on Pi 5."""
         try:
             t0 = time.time()
             logger.info(f"Piper TTS: {text[:50]}...")
 
-            def _synthesize():
-                # Collect raw PCM audio from Piper
-                raw_audio = bytes()
-                for audio_chunk in _piper_voice.synthesize_stream_raw(text):
-                    raw_audio += audio_chunk
-                # Wrap in WAV container
-                buffer = io.BytesIO()
-                with wave.open(buffer, "wb") as wav_file:
-                    wav_file.setnchannels(1)
-                    wav_file.setsampwidth(2)
-                    wav_file.setframerate(22050)
-                    wav_file.writeframes(raw_audio)
-                return buffer.getvalue()
+            proc = await asyncio.create_subprocess_exec(
+                "piper", "--model", PIPER_MODEL_PATH, "--output-raw",
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            raw_audio, stderr = await proc.communicate(input=text.encode("utf-8"))
 
-            wav_bytes = await asyncio.to_thread(_synthesize)
+            if proc.returncode != 0:
+                raise RuntimeError(f"Piper exited {proc.returncode}: {stderr.decode()}")
+
+            # Wrap raw PCM in WAV container
+            buffer = io.BytesIO()
+            with wave.open(buffer, "wb") as wav_file:
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(22050)
+                wav_file.writeframes(raw_audio)
+            wav_bytes = buffer.getvalue()
+
             logger.info(f"Piper TTS: {len(wav_bytes)} bytes in {time.time()-t0:.1f}s")
             return wav_bytes
         except Exception as e:
