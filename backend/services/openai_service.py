@@ -35,21 +35,24 @@ CHARACTER_PROMPT = """
 Stay in character as {char_name}."""
 
 
-# Piper TTS config
-_piper_available = False
+# Piper TTS - keep model loaded in memory for fast synthesis
+_piper_voice = None
 PIPER_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "piper", "en_US-lessac-medium.onnx")
 
-def _check_piper():
-    global _piper_available
-    if os.path.exists(PIPER_MODEL_PATH):
-        import shutil
-        if shutil.which("piper"):
-            _piper_available = True
-            logger.info(f"Piper TTS available: {PIPER_MODEL_PATH}")
+def _load_piper():
+    global _piper_voice
+    try:
+        from piper import PiperVoice
+        if os.path.exists(PIPER_MODEL_PATH):
+            logger.info(f"Loading Piper model (this takes a moment)...")
+            _piper_voice = PiperVoice.load(PIPER_MODEL_PATH)
+            # Log available methods for debugging
+            methods = [m for m in dir(_piper_voice) if 'synth' in m.lower()]
+            logger.info(f"Piper TTS loaded. Synthesis methods: {methods}")
         else:
-            logger.warning("piper command not found in PATH — will use OpenAI TTS")
-    else:
-        logger.warning(f"Piper model not found at {PIPER_MODEL_PATH} — will use OpenAI TTS")
+            logger.warning(f"Piper model not found at {PIPER_MODEL_PATH} — will use OpenAI TTS")
+    except Exception as e:
+        logger.warning(f"Failed to load Piper: {e} — will use OpenAI TTS")
 
 
 class OpenAIService:
@@ -58,8 +61,8 @@ class OpenAIService:
     def __init__(self):
         self._client = None
         self._groq_client = None
-        if not _piper_available:
-            _check_piper()
+        if _piper_voice is None:
+            _load_piper()
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -214,36 +217,31 @@ class OpenAIService:
 
     async def text_to_speech(self, text: str) -> bytes:
         """Generate speech — uses Piper (local, fast) with OpenAI TTS as fallback."""
-        if _piper_available:
+        if _piper_voice is not None:
             return await self._tts_piper(text)
         return await self._tts_openai(text)
 
     async def _tts_piper(self, text: str) -> bytes:
-        """Local TTS via Piper CLI — no network, ~0.3-0.8s on Pi 5."""
+        """Local TTS via Piper — model pre-loaded in memory, ~0.2-0.5s on Pi 5."""
         try:
             t0 = time.time()
             logger.info(f"Piper TTS: {text[:50]}...")
 
-            proc = await asyncio.create_subprocess_exec(
-                "piper", "--model", PIPER_MODEL_PATH, "--output-raw",
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            raw_audio, stderr = await proc.communicate(input=text.encode("utf-8"))
+            def _synthesize():
+                import tempfile
+                # Write to a real temp file to avoid BytesIO/wave issues
+                tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+                tmp_path = tmp.name
+                tmp.close()
+                try:
+                    with wave.open(tmp_path, "wb") as wav_file:
+                        _piper_voice.synthesize(text, wav_file)
+                    with open(tmp_path, "rb") as f:
+                        return f.read()
+                finally:
+                    os.unlink(tmp_path)
 
-            if proc.returncode != 0:
-                raise RuntimeError(f"Piper exited {proc.returncode}: {stderr.decode()}")
-
-            # Wrap raw PCM in WAV container
-            buffer = io.BytesIO()
-            with wave.open(buffer, "wb") as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(22050)
-                wav_file.writeframes(raw_audio)
-            wav_bytes = buffer.getvalue()
-
+            wav_bytes = await asyncio.to_thread(_synthesize)
             logger.info(f"Piper TTS: {len(wav_bytes)} bytes in {time.time()-t0:.1f}s")
             return wav_bytes
         except Exception as e:
