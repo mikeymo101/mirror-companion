@@ -13,6 +13,87 @@
   z-index: 2;
 }
 
+/* ========================
+   LOTTIE CHARACTER
+   ======================== */
+
+.lottie-character {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.lottie-character--idle {
+  animation: lottie-idle 4s ease-in-out infinite;
+}
+
+.lottie-character--wake_word_detected {
+  animation: lottie-wake 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.lottie-character--listening {
+  animation: lottie-listen 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.4));
+}
+
+.lottie-character--processing {
+  animation: lottie-process 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.3));
+}
+
+.lottie-character--talking {
+  animation: lottie-talk 0.4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 15px rgba(244, 114, 182, 0.4));
+}
+
+.lottie-character--happy {
+  animation: lottie-happy 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) infinite alternate;
+  filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.4));
+}
+
+.lottie-character--sleepy {
+  animation: lottie-sleepy 6s ease-in-out infinite;
+  opacity: 0.6;
+  filter: brightness(0.7);
+}
+
+@keyframes lottie-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes lottie-wake {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.05); }
+}
+
+@keyframes lottie-listen {
+  0%, 100% { transform: translateY(-2px) scale(1.03); }
+  50% { transform: translateY(-6px) scale(1.06); }
+}
+
+@keyframes lottie-process {
+  0%, 100% { transform: rotate(-1.5deg) scale(1.02); }
+  50% { transform: rotate(1.5deg) scale(1.05); }
+}
+
+@keyframes lottie-talk {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-6px) scale(1.04); }
+}
+
+@keyframes lottie-happy {
+  0% { transform: translateY(0) scale(1) rotate(-2deg); }
+  100% { transform: translateY(-12px) scale(1.08) rotate(2deg); }
+}
+
+@keyframes lottie-sleepy {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(3px) rotate(1deg); }
+}
+
 .character__orb {
   width: 200px;
   height: 200px;
