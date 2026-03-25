@@ -9,8 +9,10 @@ const VOICE_STATES = {
 };
 
 // Check if browser supports Web Speech API
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const hasSpeechRecognition = !!SpeechRecognition;
+// Disabled for now — Chromium on Pi needs Google servers for this, which is unreliable
+// Falls back to audio recording + Whisper API instead
+const SpeechRecognition = null;
+const hasSpeechRecognition = false;
 
 export default function useVoice() {
   const [currentState, setCurrentState] = useState(VOICE_STATES.IDLE);
@@ -167,7 +169,12 @@ export default function useVoice() {
 
         recognition.onerror = (event) => {
           console.error('[useVoice] Speech recognition error:', event.error);
-          if (event.error !== 'aborted') {
+          recognitionRef.current = null;
+          if (event.error === 'network' || event.error === 'service-not-allowed' || event.error === 'not-allowed') {
+            // Fall back to audio recording
+            console.log('[useVoice] Falling back to audio recording');
+            startAudioRecording();
+          } else if (event.error !== 'aborted') {
             setError(`Speech recognition: ${event.error}`);
             setCurrentState(VOICE_STATES.IDLE);
           }
