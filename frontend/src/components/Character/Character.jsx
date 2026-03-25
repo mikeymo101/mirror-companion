@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
 import './Character.css';
 import LottieCharacter from './LottieCharacter';
 import CHARACTER_MAP from './characters';
+
+// Import Lottie animation files directly — add new ones here
+import dragonLottie from '../../assets/animations/dragon.json';
+
+const LOTTIE_MAP = {
+  dragon: dragonLottie,
+};
 
 const STATE_CONFIG = {
   idle: { className: 'character--idle' },
@@ -15,19 +21,7 @@ const STATE_CONFIG = {
 
 export default function Character({ state = 'idle', characterType = null }) {
   const config = STATE_CONFIG[state] || STATE_CONFIG.idle;
-  const [lottieData, setLottieData] = useState(null);
-
-  // Try to load a Lottie JSON for this character type
-  useEffect(() => {
-    if (!characterType) return;
-
-    import(`../../assets/animations/${characterType}.json`)
-      .then((mod) => setLottieData(mod.default))
-      .catch(() => {
-        // No Lottie file for this character — fall back to SVG
-        setLottieData(null);
-      });
-  }, [characterType]);
+  const lottieData = characterType ? LOTTIE_MAP[characterType] || null : null;
 
   const CharacterSVG = characterType ? CHARACTER_MAP[characterType] : null;
 
