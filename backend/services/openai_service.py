@@ -228,12 +228,17 @@ class OpenAIService:
             logger.info(f"Piper TTS: {text[:50]}...")
 
             def _synthesize():
+                # Collect raw PCM audio from Piper
+                raw_audio = bytes()
+                for audio_chunk in _piper_voice.synthesize_stream_raw(text):
+                    raw_audio += audio_chunk
+                # Wrap in WAV container
                 buffer = io.BytesIO()
                 with wave.open(buffer, "wb") as wav_file:
                     wav_file.setnchannels(1)
-                    wav_file.setsampwidth(2)  # 16-bit
+                    wav_file.setsampwidth(2)
                     wav_file.setframerate(22050)
-                    _piper_voice.synthesize(text, wav_file)
+                    wav_file.writeframes(raw_audio)
                 return buffer.getvalue()
 
             wav_bytes = await asyncio.to_thread(_synthesize)
