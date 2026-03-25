@@ -9,6 +9,7 @@ import logging
 from typing import Optional, List, AsyncGenerator
 
 from openai import AsyncOpenAI
+from groq import AsyncGroq
 
 logger = logging.getLogger("mirror-companion.openai")
 
@@ -42,6 +43,7 @@ class OpenAIService:
 
     def __init__(self):
         self._client = None
+        self._groq_client = None
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -52,20 +54,52 @@ class OpenAIService:
             self._client = AsyncOpenAI(api_key=api_key)
         return self._client
 
+    @property
+    def groq_client(self) -> AsyncGroq:
+        if self._groq_client is None:
+            api_key = os.environ.get("GROQ_API_KEY")
+            if not api_key:
+                logger.warning("GROQ_API_KEY not set — will fall back to OpenAI Whisper.")
+            self._groq_client = AsyncGroq(api_key=api_key)
+        return self._groq_client
+
     async def transcribe(self, audio_file_path: str) -> str:
+        """Transcribe audio — uses Groq (fast) with OpenAI Whisper as fallback."""
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if groq_key:
+            return await self._transcribe_groq(audio_file_path)
+        return await self._transcribe_openai(audio_file_path)
+
+    async def _transcribe_groq(self, audio_file_path: str) -> str:
         try:
             t0 = time.time()
-            logger.info(f"Transcribing: {audio_file_path}")
+            logger.info(f"Transcribing via Groq: {audio_file_path}")
+            with open(audio_file_path, "rb") as audio_file:
+                response = await self.groq_client.audio.transcriptions.create(
+                    model="whisper-large-v3",
+                    file=audio_file,
+                    language="en",
+                )
+            logger.info(f"Groq transcription ({time.time()-t0:.1f}s): {response.text}")
+            return response.text
+        except Exception as e:
+            logger.error(f"Groq Whisper failed, falling back to OpenAI: {e}")
+            return await self._transcribe_openai(audio_file_path)
+
+    async def _transcribe_openai(self, audio_file_path: str) -> str:
+        try:
+            t0 = time.time()
+            logger.info(f"Transcribing via OpenAI: {audio_file_path}")
             with open(audio_file_path, "rb") as audio_file:
                 response = await self.client.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
                     language="en",
                 )
-            logger.info(f"Transcription ({time.time()-t0:.1f}s): {response.text}")
+            logger.info(f"OpenAI transcription ({time.time()-t0:.1f}s): {response.text}")
             return response.text
         except Exception as e:
-            logger.error(f"Whisper failed: {e}", exc_info=True)
+            logger.error(f"OpenAI Whisper failed: {e}", exc_info=True)
             raise
 
     async def generate_response(
