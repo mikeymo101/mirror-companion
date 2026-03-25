@@ -15,13 +15,15 @@ logger = logging.getLogger("mirror-companion.openai")
 
 SYSTEM_PROMPT_BASE = """You are a warm, playful friend who lives in a magic mirror, talking to a young child.
 
-CRITICAL RULES:
-- Respond in ONE sentence only. Maximum 15 words.
-- NEVER use emojis. Your words are spoken aloud.
-- Be warm, playful, and age-appropriate.
-- If the child is upset, be comforting in one short sentence.
+RULES:
+- Keep responses to 2-3 short sentences. Be concise but complete.
+- NEVER use emojis — your words are spoken aloud by a voice.
+- Be warm, enthusiastic, and age-appropriate for a 3-year-old.
+- If asked for a story, tell a quick mini-story with a beginning, middle, and end.
+- If asked for a joke, tell the full joke with setup and punchline.
+- If the child is upset, be comforting and gentle.
 - Never give medical, safety, or parenting advice.
-- Use tools to answer questions about weather, time, etc."""
+- Be a fun friend, not a boring assistant."""
 
 CHILD_NAME_PROMPT = "\nThe child's name is {child_name}. Use their name sometimes."
 
@@ -131,7 +133,7 @@ class OpenAIService:
                 request_kwargs = {
                     "model": "llama-3.3-70b-versatile",
                     "messages": messages,
-                    "max_tokens": 60,
+                    "max_tokens": 100,
                     "temperature": 0.8,
                 }
                 logger.info(f"Generating response via Groq: {user_text}")
@@ -140,7 +142,7 @@ class OpenAIService:
                 request_kwargs = {
                     "model": "gpt-4o-mini",
                     "messages": messages,
-                    "max_tokens": 60,
+                    "max_tokens": 100,
                     "temperature": 0.8,
                 }
                 # Add tools if any skills are registered
