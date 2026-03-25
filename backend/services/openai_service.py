@@ -229,12 +229,14 @@ class OpenAIService:
 
             def _synthesize():
                 import tempfile
-                # Write to a real temp file to avoid BytesIO/wave issues
                 tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
                 tmp_path = tmp.name
                 tmp.close()
                 try:
                     with wave.open(tmp_path, "wb") as wav_file:
+                        wav_file.setnchannels(1)
+                        wav_file.setsampwidth(2)
+                        wav_file.setframerate(_piper_voice.config.sample_rate)
                         _piper_voice.synthesize(text, wav_file)
                     with open(tmp_path, "rb") as f:
                         return f.read()
