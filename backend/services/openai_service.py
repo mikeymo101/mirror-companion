@@ -1,18 +1,18 @@
 """
-AI Service — Groq STT + LLM, Piper local TTS, OpenAI fallbacks.
+AI Service — Groq STT + LLM, Edge TTS, OpenAI fallbacks.
 """
 
 import os
 import io
 import json
 import time
-import wave
 import asyncio
 import logging
 from typing import Optional, List
 
 from openai import AsyncOpenAI
 from groq import AsyncGroq
+import edge_tts
 
 logger = logging.getLogger("mirror-companion.openai")
 
@@ -35,24 +35,8 @@ CHARACTER_PROMPT = """
 Stay in character as {char_name}."""
 
 
-# Piper TTS - keep model loaded in memory for fast synthesis
-_piper_voice = None
-PIPER_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "piper", "en_US-lessac-medium.onnx")
-
-def _load_piper():
-    global _piper_voice
-    try:
-        from piper import PiperVoice
-        if os.path.exists(PIPER_MODEL_PATH):
-            logger.info(f"Loading Piper model (this takes a moment)...")
-            _piper_voice = PiperVoice.load(PIPER_MODEL_PATH)
-            # Log available methods for debugging
-            methods = [m for m in dir(_piper_voice) if 'synth' in m.lower()]
-            logger.info(f"Piper TTS loaded. Synthesis methods: {methods}")
-        else:
-            logger.warning(f"Piper model not found at {PIPER_MODEL_PATH} — will use OpenAI TTS")
-    except Exception as e:
-        logger.warning(f"Failed to load Piper: {e} — will use OpenAI TTS")
+# Edge TTS voice — warm female voice, good for children
+EDGE_TTS_VOICE = "en-US-AnaNeural"
 
 
 class OpenAIService:
@@ -61,8 +45,6 @@ class OpenAIService:
     def __init__(self):
         self._client = None
         self._groq_client = None
-        if _piper_voice is None:
-            _load_piper()
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -216,38 +198,26 @@ class OpenAIService:
             raise
 
     async def text_to_speech(self, text: str) -> bytes:
-        """Generate speech — uses Piper (local, fast) with OpenAI TTS as fallback."""
-        if _piper_voice is not None:
-            return await self._tts_piper(text)
-        return await self._tts_openai(text)
+        """Generate speech — uses Edge TTS (free, fast) with OpenAI TTS as fallback."""
+        return await self._tts_edge(text)
 
-    async def _tts_piper(self, text: str) -> bytes:
-        """Local TTS via Piper — model pre-loaded in memory, ~0.2-0.5s on Pi 5."""
+    async def _tts_edge(self, text: str) -> bytes:
+        """Free TTS via Microsoft Edge — ~0.5-1s, no API key needed."""
         try:
             t0 = time.time()
-            logger.info(f"Piper TTS: {text[:50]}...")
+            logger.info(f"Edge TTS: {text[:50]}...")
 
-            def _synthesize():
-                import tempfile
-                tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-                tmp_path = tmp.name
-                tmp.close()
-                try:
-                    with wave.open(tmp_path, "wb") as wav_file:
-                        wav_file.setnchannels(1)
-                        wav_file.setsampwidth(2)
-                        wav_file.setframerate(_piper_voice.config.sample_rate)
-                        _piper_voice.synthesize(text, wav_file)
-                    with open(tmp_path, "rb") as f:
-                        return f.read()
-                finally:
-                    os.unlink(tmp_path)
+            communicate = edge_tts.Communicate(text, EDGE_TTS_VOICE)
+            audio_data = io.BytesIO()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_data.write(chunk["data"])
 
-            wav_bytes = await asyncio.to_thread(_synthesize)
-            logger.info(f"Piper TTS: {len(wav_bytes)} bytes in {time.time()-t0:.1f}s")
-            return wav_bytes
+            audio_bytes = audio_data.getvalue()
+            logger.info(f"Edge TTS: {len(audio_bytes)} bytes in {time.time()-t0:.1f}s")
+            return audio_bytes
         except Exception as e:
-            logger.error(f"Piper TTS failed, falling back to OpenAI: {e}")
+            logger.error(f"Edge TTS failed, falling back to OpenAI: {e}")
             return await self._tts_openai(text)
 
     async def _tts_openai(self, text: str) -> bytes:
