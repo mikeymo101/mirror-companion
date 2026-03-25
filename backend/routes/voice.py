@@ -36,6 +36,24 @@ async def execute_skill(name: str, args: dict) -> str:
     return f"Unknown skill: {name}"
 
 
+# Keyword-based skill routing — avoids a 2s GPT tool-detection call
+SKILL_KEYWORDS = {
+    "get_weather": ["weather", "temperature", "rain", "sunny", "hot", "cold", "outside"],
+    "get_time_and_date": ["time", "what time", "what day", "date", "today"],
+    "tell_joke": ["joke", "funny", "make me laugh", "tell me a joke"],
+}
+
+
+def match_skill_by_keywords(text: str) -> str | None:
+    """Match user text to a skill using keywords. Returns skill name or None."""
+    text_lower = text.lower()
+    for skill_name, keywords in SKILL_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in text_lower:
+                return skill_name
+    return None
+
+
 async def get_ai_context():
     """Get character context and conversation history for AI calls."""
     character = await get_character()
@@ -244,15 +262,22 @@ async def voice_websocket(websocket: WebSocket):
 
                 # Get context and generate response
                 character, character_context, conversation_history = await get_ai_context()
-                tools = skill_registry.get_all_tool_definitions()
 
-                # Single GPT call
+                # Try keyword-based skill routing first (saves ~2s by skipping GPT tool detection)
+                matched_skill = match_skill_by_keywords(transcription)
+                skill_context = None
+
+                if matched_skill:
+                    logger.info(f"Keyword matched skill: {matched_skill}")
+                    skill_result = await execute_skill(matched_skill, {})
+                    # Inject skill result into the prompt so GPT just formats it nicely
+                    skill_context = f"[Skill result for {matched_skill}: {skill_result}]"
+
+                # Single GPT call — no tools needed since we already ran the skill
                 response_text = await openai_service.generate_response(
-                    user_text=transcription,
+                    user_text=(f"{transcription}\n\n{skill_context}" if skill_context else transcription),
                     conversation_history=conversation_history,
                     character_context=character_context,
-                    tools=tools if tools else None,
-                    skill_executor=execute_skill,
                 )
 
                 # Send text to frontend immediately

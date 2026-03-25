@@ -186,7 +186,7 @@ class OpenAIService:
                 model="tts-1",
                 voice="nova",
                 input=text,
-                response_format="mp3",
+                response_format="opus",
             )
             audio_bytes = response.content
             logger.info(f"TTS: {len(audio_bytes)} bytes in {time.time()-t0:.1f}s")
