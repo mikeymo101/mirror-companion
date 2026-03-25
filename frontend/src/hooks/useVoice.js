@@ -22,7 +22,9 @@ export default function useVoice() {
 
   const connectWebSocket = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/voice/ws`;
+    const hostname = window.location.hostname;
+    // Connect directly to backend port 8000 for WebSocket (avoids Vite proxy issues)
+    const wsUrl = `${protocol}//${hostname}:8000/api/voice/ws`;
 
     try {
       const ws = new WebSocket(wsUrl);
