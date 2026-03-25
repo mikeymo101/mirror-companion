@@ -39,7 +39,7 @@ async def execute_skill(name: str, args: dict) -> str:
 # Keyword-based skill routing — avoids a 2s GPT tool-detection call
 SKILL_KEYWORDS = {
     "get_weather": ["weather", "temperature", "rain", "sunny", "hot", "cold", "outside"],
-    "get_time_and_date": ["time", "what time", "what day", "date", "today"],
+    "get_time_and_date": ["what time", "what day", "what date", "what's the time", "what's the date"],
     "tell_joke": ["joke", "funny", "make me laugh", "tell me a joke"],
 }
 

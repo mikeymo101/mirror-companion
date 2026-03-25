@@ -230,6 +230,9 @@ class OpenAIService:
             def _synthesize():
                 buffer = io.BytesIO()
                 with wave.open(buffer, "wb") as wav_file:
+                    wav_file.setnchannels(1)
+                    wav_file.setsampwidth(2)  # 16-bit
+                    wav_file.setframerate(22050)
                     _piper_voice.synthesize(text, wav_file)
                 return buffer.getvalue()
 
