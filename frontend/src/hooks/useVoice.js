@@ -48,10 +48,24 @@ export default function useVoice() {
           setCurrentState(VOICE_STATES.TALKING);
           const url = URL.createObjectURL(event.data);
           const audio = new Audio(url);
-          audio.onended = () => {
+
+          const finishTalking = () => {
             URL.revokeObjectURL(url);
             setCurrentState(VOICE_STATES.IDLE);
           };
+
+          audio.onended = finishTalking;
+          audio.onerror = finishTalking;
+
+          // Fallback: if onended doesn't fire, check when audio stops
+          audio.ontimeupdate = () => {
+            if (audio.currentTime >= audio.duration - 0.1) {
+              audio.ontimeupdate = null;
+              // Small delay so last words are heard
+              setTimeout(finishTalking, 300);
+            }
+          };
+
           audio.play().catch((err) => {
             console.error('[useVoice] Audio playback failed:', err);
             setCurrentState(VOICE_STATES.IDLE);
@@ -66,6 +80,8 @@ export default function useVoice() {
             case 'response':
               setTranscript(data.transcription || '');
               setResponse(data.response_text || '');
+              // Start talking animation immediately — don't wait for audio blob
+              setCurrentState(VOICE_STATES.TALKING);
               break;
             case 'silence':
               setCurrentState(VOICE_STATES.IDLE);
