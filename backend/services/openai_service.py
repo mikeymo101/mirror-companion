@@ -1,10 +1,13 @@
 """
-OpenAI Service — Groq transcription, GPT-4o-mini chat with skills, and TTS.
+AI Service — Groq STT + LLM, Piper local TTS, OpenAI fallbacks.
 """
 
 import os
+import io
 import json
 import time
+import wave
+import asyncio
 import logging
 from typing import Optional, List
 
@@ -32,12 +35,34 @@ CHARACTER_PROMPT = """
 Stay in character as {char_name}."""
 
 
+# Try to load Piper for local TTS
+_piper_voice = None
+PIPER_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "piper", "en_US-lessac-medium.onnx")
+
+def _load_piper():
+    global _piper_voice
+    try:
+        from piper import PiperVoice
+        if os.path.exists(PIPER_MODEL_PATH):
+            _piper_voice = PiperVoice.load(PIPER_MODEL_PATH)
+            logger.info(f"Piper TTS loaded: {PIPER_MODEL_PATH}")
+        else:
+            logger.warning(f"Piper model not found at {PIPER_MODEL_PATH} — will use OpenAI TTS")
+    except ImportError:
+        logger.warning("piper-tts not installed — will use OpenAI TTS")
+    except Exception as e:
+        logger.warning(f"Failed to load Piper: {e} — will use OpenAI TTS")
+
+
 class OpenAIService:
-    """Handles Groq transcription, GPT chat with skills, and OpenAI TTS."""
+    """Handles Groq STT + LLM, Piper local TTS, with OpenAI fallbacks."""
 
     def __init__(self):
         self._client = None
         self._groq_client = None
+        # Load Piper on first instantiation
+        if _piper_voice is None:
+            _load_piper()
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -191,9 +216,35 @@ class OpenAIService:
             raise
 
     async def text_to_speech(self, text: str) -> bytes:
+        """Generate speech — uses Piper (local, fast) with OpenAI TTS as fallback."""
+        if _piper_voice is not None:
+            return await self._tts_piper(text)
+        return await self._tts_openai(text)
+
+    async def _tts_piper(self, text: str) -> bytes:
+        """Local TTS via Piper — no network, ~0.2-0.5s on Pi 5."""
         try:
             t0 = time.time()
-            logger.info(f"TTS: {text[:50]}...")
+            logger.info(f"Piper TTS: {text[:50]}...")
+
+            def _synthesize():
+                buffer = io.BytesIO()
+                with wave.open(buffer, "wb") as wav_file:
+                    _piper_voice.synthesize(text, wav_file)
+                return buffer.getvalue()
+
+            wav_bytes = await asyncio.to_thread(_synthesize)
+            logger.info(f"Piper TTS: {len(wav_bytes)} bytes in {time.time()-t0:.1f}s")
+            return wav_bytes
+        except Exception as e:
+            logger.error(f"Piper TTS failed, falling back to OpenAI: {e}")
+            return await self._tts_openai(text)
+
+    async def _tts_openai(self, text: str) -> bytes:
+        """Cloud TTS via OpenAI — higher quality but slower."""
+        try:
+            t0 = time.time()
+            logger.info(f"OpenAI TTS: {text[:50]}...")
             response = await self.client.audio.speech.create(
                 model="tts-1",
                 voice="nova",
@@ -201,8 +252,8 @@ class OpenAIService:
                 response_format="opus",
             )
             audio_bytes = response.content
-            logger.info(f"TTS: {len(audio_bytes)} bytes in {time.time()-t0:.1f}s")
+            logger.info(f"OpenAI TTS: {len(audio_bytes)} bytes in {time.time()-t0:.1f}s")
             return audio_bytes
         except Exception as e:
-            logger.error(f"TTS failed: {e}", exc_info=True)
+            logger.error(f"OpenAI TTS failed: {e}", exc_info=True)
             raise
