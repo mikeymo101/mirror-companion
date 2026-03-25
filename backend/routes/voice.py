@@ -251,8 +251,12 @@ async def voice_websocket(websocket: WebSocket):
                 f.write(audio_data)
 
             try:
+                logger.info(f"Received audio data: {len(audio_data)} bytes")
+
                 # Transcribe
+                logger.info("Starting transcription...")
                 transcription = await openai_service.transcribe(temp_path)
+                logger.info(f"Transcription result: '{transcription}'")
 
                 if not transcription or transcription.strip() == "":
                     await websocket.send_json(
@@ -282,14 +286,18 @@ async def voice_websocket(websocket: WebSocket):
                     )
 
                 # Generate response
+                logger.info("Generating AI response...")
                 response_text = await openai_service.generate_response(
                     user_text=transcription,
                     conversation_history=conversation_history,
                     character_context=character_context,
                 )
+                logger.info(f"AI response: '{response_text}'")
 
                 # Generate TTS
+                logger.info("Generating TTS audio...")
                 audio_bytes = await openai_service.text_to_speech(response_text)
+                logger.info(f"TTS audio: {len(audio_bytes)} bytes")
 
                 # Save conversation
                 character_id = character["id"] if character else None
@@ -306,6 +314,13 @@ async def voice_websocket(websocket: WebSocket):
 
                 # Send audio bytes
                 await websocket.send_bytes(audio_bytes)
+                logger.info("Response sent to client.")
+
+            except Exception as e:
+                logger.error(f"Error processing audio: {e}", exc_info=True)
+                await websocket.send_json(
+                    {"type": "error", "message": str(e)}
+                )
 
             finally:
                 # Clean up temp file
