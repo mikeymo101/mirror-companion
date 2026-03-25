@@ -16,6 +16,105 @@
   transition: filter 0.4s ease;
 }
 
+/* Character avatar (SVG animal) */
+.character__avatar {
+  width: 200px;
+  height: 200px;
+  z-index: 2;
+}
+
+.char-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));
+  transition: transform 0.3s ease;
+}
+
+/* Character eye blink */
+.char-eye {
+  animation: char-blink 4s ease-in-out infinite;
+}
+
+@keyframes char-blink {
+  0%, 45%, 55%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+
+/* Dragon sparkles */
+.char-sparkle {
+  animation: sparkle-float 3s ease-in-out infinite;
+}
+
+@keyframes sparkle-float {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-5px); }
+}
+
+/* State-based character animations */
+.char-svg--idle {
+  animation: char-idle-breathe 4s ease-in-out infinite;
+}
+
+.char-svg--listening {
+  animation: char-listen-pulse 1.5s ease-in-out infinite;
+}
+
+.char-svg--processing {
+  animation: char-process 2s linear infinite;
+}
+
+.char-svg--talking .char-mouth {
+  animation: char-talk-mouth 0.3s ease-in-out infinite alternate;
+}
+
+.char-svg--talking {
+  animation: char-talk-bounce 0.4s ease-in-out infinite alternate;
+}
+
+.char-svg--happy {
+  animation: char-happy-bounce 0.5s ease-in-out infinite alternate;
+}
+
+.char-svg--sleepy {
+  animation: char-sleepy 6s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+@keyframes char-idle-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.03) translateY(-3px); }
+}
+
+@keyframes char-listen-pulse {
+  0%, 100% { transform: scale(1.05); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes char-process {
+  0% { filter: drop-shadow(0 0 20px rgba(139,92,246,0.4)) hue-rotate(0deg); }
+  100% { filter: drop-shadow(0 0 20px rgba(139,92,246,0.4)) hue-rotate(360deg); }
+}
+
+@keyframes char-talk-bounce {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.05) translateY(-4px); }
+}
+
+@keyframes char-talk-mouth {
+  0% { d: path("M 94 90 Q 100 96 106 90"); }
+  100% { d: path("M 94 90 Q 100 100 106 90"); }
+}
+
+@keyframes char-happy-bounce {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.08) translateY(-10px); }
+}
+
+@keyframes char-sleepy {
+  0%, 100% { transform: scale(0.97); }
+  50% { transform: scale(1.0); }
+}
+
 /* Ripple rings */
 .character__ripple {
   position: absolute;

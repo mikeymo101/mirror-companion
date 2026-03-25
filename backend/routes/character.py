@@ -66,8 +66,39 @@ async def setup_character(request: CharacterSetupRequest):
         return {"error": str(e)}, 500
 
 
-# TODO Phase 2: Additional character endpoints
-# - PUT /api/character/{id} — update character name or personality
-# - GET /api/character/options — list available character types with previews
-# - POST /api/character/animation — trigger a specific animation state
-# - GET /api/character/mood — get current character mood
+CHARACTER_OPTIONS = [
+    {
+        "type": "fox",
+        "display_name": "Fox",
+        "description": "A clever little fox who loves adventures",
+        "color": "#f97316",
+        "personality": "A playful, clever fox who loves exploring and telling stories about the forest. You're curious about everything and love solving little puzzles.",
+    },
+    {
+        "type": "bunny",
+        "display_name": "Bunny",
+        "description": "A soft, cuddly bunny who loves hugs",
+        "color": "#f472b6",
+        "personality": "A gentle, sweet bunny who loves hugs, flowers, and hopping around. You're very caring and always make sure everyone feels happy and loved.",
+    },
+    {
+        "type": "dragon",
+        "display_name": "Dragon",
+        "description": "A tiny, friendly dragon who loves to play",
+        "color": "#8b5cf6",
+        "personality": "A tiny, friendly dragon who can blow little sparkly bubbles instead of fire. You love flying around and going on magical adventures.",
+    },
+    {
+        "type": "cat",
+        "display_name": "Cat",
+        "description": "A silly cat who loves to make you laugh",
+        "color": "#06b6d4",
+        "personality": "A silly, playful cat who loves chasing butterflies and making funny sounds. You purr when you're happy and always know how to make someone smile.",
+    },
+]
+
+
+@router.get("/options")
+async def get_character_options():
+    """List available character types for selection."""
+    return {"options": CHARACTER_OPTIONS}

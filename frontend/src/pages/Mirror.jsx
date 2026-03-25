@@ -6,14 +6,14 @@ import useVoice from '../hooks/useVoice';
 import './Mirror.css';
 
 const STATUS_TEXT = {
-  idle: "Say 'Mirror Mirror' to start",
+  idle: null,
   wake_word_detected: 'Mirror Mirror...',
   listening: 'Listening...',
   processing: 'Thinking...',
   talking: '',
 };
 
-export default function Mirror() {
+export default function Mirror({ character }) {
   const {
     currentState,
     transcript,
@@ -39,7 +39,7 @@ export default function Mirror() {
     }
   }, [currentState, VOICE_STATES]);
 
-  const statusText = STATUS_TEXT[characterState] || STATUS_TEXT.idle;
+  const statusText = STATUS_TEXT[characterState];
   const isListening = currentState === VOICE_STATES.LISTENING;
   const isTalking = currentState === VOICE_STATES.TALKING;
 
@@ -52,8 +52,13 @@ export default function Mirror() {
 
       {/* Main content area */}
       <div className="mirror__center">
-        {/* Character orb */}
-        <Character state={characterState} />
+        {/* Character */}
+        <Character state={characterState} characterType={character?.type} />
+
+        {/* Character name */}
+        {character?.name && characterState === 'idle' && (
+          <div className="mirror__character-name">{character.name}</div>
+        )}
 
         {/* Listening wave visualization */}
         <div className="mirror__wave">
@@ -75,9 +80,11 @@ export default function Mirror() {
         )}
 
         {/* Status text */}
-        <div className={`mirror__status ${characterState !== 'idle' ? 'mirror__status--active' : ''}`}>
-          {statusText}
-        </div>
+        {statusText && (
+          <div className={`mirror__status ${characterState !== 'idle' ? 'mirror__status--active' : ''}`}>
+            {statusText}
+          </div>
+        )}
       </div>
 
       {/* Connection indicator */}
@@ -97,7 +104,7 @@ export default function Mirror() {
 
       {/* Spacebar hint */}
       <div className="mirror__hint">
-        Hold Space to talk / Click to demo
+        Hold Space to talk
       </div>
     </div>
   );
