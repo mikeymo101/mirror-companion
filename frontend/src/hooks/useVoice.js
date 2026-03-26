@@ -27,6 +27,7 @@ export default function useVoice() {
   const audioChunksRef = useRef([]);
   const spaceHeldRef = useRef(false);
   const interimTranscriptRef = useRef('');
+  const audioUnlockedRef = useRef(false);
 
   const connectWebSocket = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -152,7 +153,18 @@ export default function useVoice() {
     }
   }, []);
 
+  // Unlock audio playback on first user interaction (Chromium autoplay policy)
+  const unlockAudio = useCallback(() => {
+    if (audioUnlockedRef.current) return;
+    const silent = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+    silent.play().then(() => {
+      audioUnlockedRef.current = true;
+      console.log('[useVoice] Audio playback unlocked');
+    }).catch(() => {});
+  }, []);
+
   const startListening = useCallback(async () => {
+    unlockAudio();
     setError(null);
     setResponse('');
     setCurrentState(VOICE_STATES.LISTENING);
